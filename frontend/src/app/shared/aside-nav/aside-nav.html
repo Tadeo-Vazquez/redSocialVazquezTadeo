@@ -1,0 +1,30 @@
+<aside class="side-navigation" aria-label="Navegación principal">
+  <a class="brand" routerLink="/publicaciones" aria-label="Ir a publicaciones">
+    <img src="/logoApp.png" alt="FrontEo" />
+  </a>
+
+  <nav class="navigation-links">
+    <a routerLink="/publicaciones" routerLinkActive="active" aria-label="Publicaciones">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h16v12H4z" />
+        <path d="M8 10h8M8 14h5" />
+      </svg>
+      <span>Publicaciones</span>
+    </a>
+
+    <a routerLink="/mi-perfil" routerLinkActive="active" aria-label="Mi perfil">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M5 21a7 7 0 0 1 14 0" />
+      </svg>
+      <span>Mi perfil</span>
+    </a>
+  </nav>
+
+  <button class="logout-button" type="button" (click)="logout()">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10" />
+    </svg>
+    <span>Cerrar sesión</span>
+  </button>
+</aside>

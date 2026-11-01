@@ -1,0 +1,32 @@
+<app-aside-nav></app-aside-nav>
+@if (currentUser) {
+  <main class="profile-page">
+    <article class="profile-card">
+      @if (currentUser.avatarUrl) {
+        <img
+          class="profile-avatar"
+          [src]="currentUser.avatarUrl"
+          alt="Foto de perfil"
+        />
+      }
+
+      <div class="profile-details">
+        <p class="profile-name">
+          {{ currentUser.nombre }} {{ currentUser.apellido }}
+        </p>
+        <p class="profile-username">@{{ currentUser.username }}</p>
+
+        @if (currentUser.fechaNacimiento) {
+          <p>
+            <strong>Fecha de nacimiento:</strong>
+            {{ currentUser.fechaNacimiento | formatoFecha }}
+          </p>
+        }
+
+        @if (currentUser.descripcionBreve) {
+          <p class="profile-description">{{ currentUser.descripcionBreve }}</p>
+        }
+      </div>
+    </article>
+  </main>
+}

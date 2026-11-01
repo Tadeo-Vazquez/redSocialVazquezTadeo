@@ -3,6 +3,7 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -14,20 +15,28 @@ import { SecureImageInterceptor } from '../utils/interceptors/secure-image.inter
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @UseInterceptors(SecureImageInterceptor('image'))
-  register(
+  async register(
     @Body() dto: RegisterDto,
     @UploadedFile() image?: Express.Multer.File,
   ) {
-    return this.authService.register(dto, image);
+    this.logger.log(`POST /auth/register - Solicitud recibida para el email: ${dto.email}`);
+    const result = await this.authService.register(dto, image);
+    this.logger.log(`POST /auth/register - Respuesta finalizada correctamente para el email: ${dto.email}`);
+    return result;
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto) {
+    this.logger.log(`POST /auth/login - Solicitud recibida para el usuario: ${dto.loginInput}`);
+    const result = await this.authService.login(dto);
+    this.logger.log(`POST /auth/login - Respuesta finalizada correctamente para el usuario: ${dto.loginInput}`);
+    return result;
   }
 }

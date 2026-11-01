@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -14,6 +15,8 @@ import { CloudinaryService } from '../utils/cloudinary.service.js';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly cloudinaryService: CloudinaryService,
@@ -34,19 +37,28 @@ export class AuthService {
       );
     }
 
+    this.logger.log(
+      `Registro iniciado: buscando un usuario existente con email ${dto.email} o username ${dto.username}`,
+    );
     const [emailExists, usernameExists] = await Promise.all([
       this.userModel.exists({ email: dto.email, isDeleted: false }),
       this.userModel.exists({ username: dto.username, isDeleted: false }),
     ]);
 
     if (emailExists) {
+      this.logger.warn(`Registro rechazado: el email ${dto.email} ya está registrado`);
       throw new ConflictException('El correo electrónico ya está registrado.');
     }
     if (usernameExists) {
+      this.logger.warn(
+        `Registro rechazado: el username ${dto.username} ya está registrado`,
+      );
       throw new ConflictException('El nombre de usuario ya está registrado.');
     }
 
+    this.logger.log(`Registro: iniciando hasheo de la contraseña para ${dto.email}`);
     const password = await bcrypt.hash(dto.password, 12);
+    this.logger.log(`Registro: contraseña hasheada para ${dto.email}`);
     const uploadedImage = await this.cloudinaryService.uploadImage(
       image.buffer,
       'red-social/perfiles',
@@ -69,6 +81,9 @@ export class AuthService {
     } catch (error) {
       if (this.isDuplicateKeyError(error)) {
         const duplicateField = this.getDuplicateField(error);
+        this.logger.warn(
+          `Registro rechazado por duplicado: ${duplicateField ?? 'usuario'} ya está registrado`,
+        );
         throw new ConflictException(
           duplicateField === 'email'
             ? 'El correo electrónico ya está registrado.'
@@ -78,6 +93,9 @@ export class AuthService {
       throw error;
     }
 
+    this.logger.log(
+      `Registro guardado en la base de datos: usuario creado con ID ${createdUser._id} y email ${createdUser.email}`,
+    );
     return {
       message: 'Usuario registrado correctamente.',
       user: this.toPublicUser(createdUser),
@@ -85,6 +103,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    this.logger.log(
+      `Login: buscando usuario por email o username con el identificador ${dto.loginInput}`,
+    );
     const user = await this.userModel
       .findOne({
         $or: [{ email: dto.loginInput }, { username: dto.loginInput }],
@@ -94,14 +115,26 @@ export class AuthService {
       .exec();
 
     if (!user) {
+      this.logger.warn(
+        `Login: no se encontró un usuario para el identificador ${dto.loginInput}`,
+      );
       throw new UnauthorizedException('Credenciales inválidas.');
     }
 
+    this.logger.log(
+      `Login: iniciando comparación del hash de contraseña para el usuario ${dto.loginInput}`,
+    );
     const passwordMatches = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatches) {
+      this.logger.warn(
+        `Login: contraseña incorrecta para el usuario ${dto.loginInput}`,
+      );
       throw new UnauthorizedException('Credenciales inválidas.');
     }
 
+    this.logger.log(
+      `Login exitoso para ${user.email}: credenciales válidas y autenticación completada`,
+    );
     return {
       message: 'Inicio de sesión correcto.',
       user: this.toPublicUser(user),

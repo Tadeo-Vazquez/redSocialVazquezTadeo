@@ -1,0 +1,111 @@
+:host {
+  display: block;
+}
+
+.side-navigation {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 100;
+  width: 240px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 18px;
+  border-right: 1px solid rgba(112, 70, 250, 0.28);
+  background: rgb(15, 14, 26);
+  box-sizing: border-box;
+}
+
+.brand {
+  height: 130px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+}
+
+.brand img {
+  width: 130px;
+  height: 130px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 8px rgb(15, 14, 26));
+}
+
+.navigation-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.navigation-links a,
+.logout-button {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 14px;
+  color: rgba(255, 255, 255, 0.72);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.navigation-links a:hover,
+.navigation-links a.active,
+.logout-button:hover {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(112, 70, 250, 0.38), rgba(235, 55, 160, 0.20));
+}
+
+.navigation-links a.active {
+  box-shadow: inset 3px 0 0 rgb(235, 55, 160);
+}
+
+.navigation-links svg,
+.logout-button svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logout-button {
+  width: 100%;
+  margin-top: auto;
+  color: #ff86c5;
+}
+
+@media (max-width: 760px) {
+  .side-navigation {
+    width: 78px;
+    padding: 18px 10px;
+  }
+
+  .brand {
+    height: 58px;
+    margin-bottom: 18px;
+  }
+
+  .brand img {
+    width: 58px;
+    height: 58px;
+  }
+
+  .navigation-links a,
+  .logout-button {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .navigation-links span,
+  .logout-button span {
+    display: none;
+  }
+}
