@@ -71,10 +71,15 @@
   background: rgb(15, 14, 26);
 }
 
-.demo-fill-button {
+.demo-fill-actions {
   position: absolute;
   top: 18px;
   right: 18px;
+  display: flex;
+  gap: 8px;
+}
+
+.demo-fill-button {
   width: 42px;
   height: 42px;
   display: grid;
@@ -87,6 +92,21 @@
   line-height: 1;
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.demo-fill-button svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.admin-demo-button {
+  border-color: rgba(112, 70, 250, 0.65);
+  background: rgba(112, 70, 250, 0.24);
 }
 
 .demo-fill-button:hover {

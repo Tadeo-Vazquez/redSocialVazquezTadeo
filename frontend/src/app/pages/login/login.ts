@@ -75,11 +75,18 @@ export class Login {
           console.error('[Login] No se pudo guardar la sesión en sessionStorage.', storageError);
         }
 
-        // Redirige al usuario a la página de publicaciones mediante el Router.
-        void this.router.navigate(['/publicaciones']).then(
+        const perfil = typeof response.user['perfil'] === 'string'
+          ? response.user['perfil']
+          : '';
+        const destination = perfil === 'administrador'
+          ? '/admin-dashboard'
+          : '/publicaciones';
+
+        // Redirige según el rol devuelto por el backend.
+        void this.router.navigate([destination]).then(
           (navigated) => {
             if (navigated) {
-              console.log('[Login] Navegación exitosa a /publicaciones.');
+              console.log(`[Login] Navegación exitosa a ${destination}.`);
             } else {
               console.warn('[Login] La navegación a /publicaciones fue cancelada.');
             }
@@ -115,6 +122,16 @@ export class Login {
     this.loginForm.patchValue({
       loginInput: 'tadeovazquez2006@gmail.com',
       password: 'A12345678',
+    });
+    this.errorMessage = '';
+    this.loginForm.markAllAsTouched();
+    this.changeDetectorRef.markForCheck();
+  }
+
+  fillAdminCredentials(): void {
+    this.loginForm.patchValue({
+      loginInput: 'emailadmin@gmail.com',
+      password: 'Hola1234',
     });
     this.errorMessage = '';
     this.loginForm.markAllAsTouched();

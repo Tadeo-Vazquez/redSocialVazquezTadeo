@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -21,6 +21,7 @@ import { Auth } from '../../services/auth';
 export class Registro {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly registerForm = new FormGroup(
     {
@@ -64,6 +65,7 @@ export class Registro {
         nonNullable: true,
         validators: [Validators.required, Validators.maxLength(280)],
       }),
+      esAdmin: new FormControl(false, { nonNullable: true }),
     },
     { validators: this.passwordsMatchValidator() },
   );
@@ -149,8 +151,18 @@ export class Registro {
     const values = this.registerForm.getRawValue();
 
     Object.entries(values).forEach(([key, value]) => {
+      if (key === 'esAdmin') {
+        if (value === true) {
+          data.append('perfil', 'administrador');
+        }
+        return;
+      }
       const formattedValue =
-        key === 'fechaNacimiento' ? this.toIsoDate(value) : value.trim();
+        key === 'fechaNacimiento'
+          ? this.toIsoDate(value as string)
+          : typeof value === 'string'
+            ? value.trim()
+            : String(value);
       data.append(
         key,
         key === 'email' || key === 'username'
@@ -164,7 +176,9 @@ export class Registro {
       next: (response) => {
         this.isLoading = false;
         this.successMessage = response.message || 'Usuario registrado correctamente.';
+        this.errorMessage = '';
         console.log('[Registro] Registro completado exitosamente.', response);
+        this.changeDetectorRef.markForCheck();
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
@@ -175,6 +189,8 @@ export class Registro {
           : typeof message === 'string'
             ? message
             : 'No se pudo completar el registro. Intenta nuevamente.';
+        this.successMessage = '';
+        this.changeDetectorRef.markForCheck();
       },
     });
   }

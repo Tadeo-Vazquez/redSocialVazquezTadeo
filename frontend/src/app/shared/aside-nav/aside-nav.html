@@ -4,21 +4,30 @@
   </a>
 
   <nav class="navigation-links">
-    <a routerLink="/publicaciones" routerLinkActive="active" aria-label="Publicaciones">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 6h16v12H4z" />
-        <path d="M8 10h8M8 14h5" />
-      </svg>
-      <span>Publicaciones</span>
-    </a>
+    @if (currentUser?.['perfil'] === 'administrador') {
+      <a routerLink="/admin-dashboard" routerLinkActive="active" aria-label="Dashboard admin">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 13h6V4H4v9zm0 7h6v-5H4v5zm10 0h6v-9h-6v9zm0-16v5h6V4h-6z" />
+        </svg>
+        <span>Dashboard</span>
+      </a>
+    } @else {
+      <a routerLink="/publicaciones" routerLinkActive="active" aria-label="Publicaciones">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16v12H4z" />
+          <path d="M8 10h8M8 14h5" />
+        </svg>
+        <span>Publicaciones</span>
+      </a>
 
-    <a routerLink="/mi-perfil" routerLinkActive="active" aria-label="Mi perfil">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M5 21a7 7 0 0 1 14 0" />
-      </svg>
-      <span>Mi perfil</span>
-    </a>
+      <a routerLink="/mi-perfil" routerLinkActive="active" aria-label="Mi perfil">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M5 21a7 7 0 0 1 14 0" />
+        </svg>
+        <span>Mi perfil</span>
+      </a>
+    }
   </nav>
 
   <button class="logout-button" type="button" (click)="logout()">

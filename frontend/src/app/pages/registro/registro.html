@@ -175,6 +175,24 @@
               <span class="field-error">La descripción es obligatoria (máximo 280 caracteres).</span>
             }
           </div>
+
+          <div class="field full-width admin-role-field">
+            <label class="admin-toggle" for="esAdmin">
+              <input
+                id="esAdmin"
+                class="admin-toggle-input"
+                type="checkbox"
+                formControlName="esAdmin"
+              />
+              <span class="toggle-track" aria-hidden="true">
+                <span class="toggle-thumb"></span>
+              </span>
+              <span class="toggle-copy">
+                <strong>Admin</strong>
+                <small>Crear esta cuenta con permisos de administrador</small>
+              </span>
+            </label>
+          </div>
         </div>
 
         @if (errorMessage) {

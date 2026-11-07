@@ -6,15 +6,34 @@
     </aside>
 
     <div class="form-panel">
-      <button
-        class="demo-fill-button"
-        type="button"
-        (click)="fillDemoCredentials()"
-        aria-label="Completar credenciales de prueba"
-        title="Completar credenciales de prueba"
-      >
-        ⚡
-      </button>
+      <div class="demo-fill-actions" aria-label="Completar credenciales de prueba">
+        <button
+          class="demo-fill-button"
+          type="button"
+          (click)="fillDemoCredentials()"
+          aria-label="Completar credenciales de usuario"
+          title="Credenciales de usuario"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M5 21a7 7 0 0 1 14 0" />
+          </svg>
+        </button>
+
+        <button
+          class="demo-fill-button admin-demo-button"
+          type="button"
+          (click)="fillAdminCredentials()"
+          aria-label="Completar credenciales de administrador"
+          title="Credenciales de administrador"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3l7 3v5c0 4.6-2.9 8.2-7 10-4.1-1.8-7-5.4-7-10V6l7-3z" />
+            <circle cx="12" cy="10" r="2.4" />
+            <path d="M8.8 16a3.9 3.9 0 0 1 6.4 0" />
+          </svg>
+        </button>
+      </div>
 
       <a class="mobile-brand" routerLink="/login" aria-label="Ir al inicio de sesión">
         <img src="/logoApp.png" alt="" />
