@@ -118,20 +118,10 @@ export class Login {
     this.showPassword = !this.showPassword;
   }
 
-  fillDemoCredentials(): void {
+  fillDemoCredentials(loginInput: string, password: string): void {
     this.loginForm.patchValue({
-      loginInput: 'tadeovazquez2006@gmail.com',
-      password: 'A12345678',
-    });
-    this.errorMessage = '';
-    this.loginForm.markAllAsTouched();
-    this.changeDetectorRef.markForCheck();
-  }
-
-  fillAdminCredentials(): void {
-    this.loginForm.patchValue({
-      loginInput: 'emailadmin@gmail.com',
-      password: 'Hola1234',
+      loginInput,
+      password,
     });
     this.errorMessage = '';
     this.loginForm.markAllAsTouched();

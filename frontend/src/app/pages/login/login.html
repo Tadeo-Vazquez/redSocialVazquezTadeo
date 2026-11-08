@@ -10,9 +10,9 @@
         <button
           class="demo-fill-button"
           type="button"
-          (click)="fillDemoCredentials()"
+          (click)="fillDemoCredentials('tadeovazquez2006@gmail.com', 'A12345678')"
           aria-label="Completar credenciales de usuario"
-          title="Credenciales de usuario"
+          title="Credenciales de Tadeo"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="8" r="4" />
@@ -20,10 +20,23 @@
           </svg>
         </button>
 
+          <button
+            class="demo-fill-button carlos-demo-button"
+            type="button"
+            (click)="fillDemoCredentials('emailcarlos@gmail.com', 'Hola1234')"
+            aria-label="Completar credenciales de Carlos"
+            title="Credenciales de Carlos"
+          >
+             <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M5 21a7 7 0 0 1 14 0" />
+            </svg>
+          </button>
+
         <button
           class="demo-fill-button admin-demo-button"
           type="button"
-          (click)="fillAdminCredentials()"
+          (click)="fillDemoCredentials('emailadmin@gmail.com', 'Hola1234')"
           aria-label="Completar credenciales de administrador"
           title="Credenciales de administrador"
         >
@@ -33,6 +46,7 @@
             <path d="M8.8 16a3.9 3.9 0 0 1 6.4 0" />
           </svg>
         </button>
+
       </div>
 
       <a class="mobile-brand" routerLink="/login" aria-label="Ir al inicio de sesión">

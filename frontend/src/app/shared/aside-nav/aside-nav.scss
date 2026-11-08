@@ -6,28 +6,50 @@
   position: fixed;
   inset: 0 auto 0 0;
   z-index: 100;
-  width: 240px;
+  width: 78px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 24px 18px;
+  padding: 24px 10px;
   border-right: 1px solid rgba(112, 70, 250, 0.28);
   background: rgb(15, 14, 26);
   box-sizing: border-box;
+  overflow: hidden;
+  transition: width 220ms ease, padding 220ms ease;
+}
+
+.side-navigation:hover,
+.side-navigation:focus-within {
+  width: 240px;
+  padding-inline: 18px;
+  box-shadow: 12px 0 30px rgba(15, 14, 26, 0.38);
 }
 
 .brand {
+  position: relative;
   height: 130px;
+  width: 100%;
   display: grid;
   place-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 38px;
 }
 
 .brand img {
-  width: 130px;
-  height: 130px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
+  transform: translate(-50%, -50%);
   filter: drop-shadow(0 12px 8px rgb(15, 14, 26));
+  transition: width 220ms ease, height 220ms ease;
+}
+
+.side-navigation:hover .brand img,
+.side-navigation:focus-within .brand img {
+  width: 250px;
+  height: 250px;
 }
 
 .navigation-links {
@@ -38,9 +60,12 @@
 
 .navigation-links a,
 .logout-button {
+  position: relative;
   height: 48px;
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   border: 0;
   border-radius: 12px;
@@ -51,6 +76,37 @@
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.navigation-links a span,
+.logout-button span {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: width 220ms ease, opacity 150ms ease;
+}
+
+.side-navigation:hover .navigation-links a,
+.side-navigation:focus-within .navigation-links a,
+.side-navigation:hover .logout-button,
+.side-navigation:focus-within .logout-button {
+  justify-content: flex-start;
+  padding-inline: 14px;
+}
+
+.side-navigation:hover .navigation-links a span,
+.side-navigation:focus-within .navigation-links a span,
+.side-navigation:hover .logout-button span,
+.side-navigation:focus-within .logout-button span {
+  width: auto;
+  opacity: 1;
+}
+
+a span , button span{
+  margin-left: 35px;
 }
 
 .navigation-links a:hover,
@@ -66,6 +122,9 @@
 
 .navigation-links svg,
 .logout-button svg {
+  position: absolute;
+  top: 13px;
+  left: calc(50% - 11px);
   width: 22px;
   height: 22px;
   flex: 0 0 auto;
@@ -74,6 +133,14 @@
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transition: left 220ms ease;
+}
+
+.side-navigation:hover .navigation-links svg,
+.side-navigation:focus-within .navigation-links svg,
+.side-navigation:hover .logout-button svg,
+.side-navigation:focus-within .logout-button svg {
+  left: 14px;
 }
 
 .logout-button {
