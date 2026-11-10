@@ -6,9 +6,10 @@ import { Post, Posts } from '../../services/posts';
 import { PublicacionCard } from '../publicaciones/publicacion-card';
 import { Session } from '../../services/session';
 import { PostLikes } from '../../services/post-likes';
+import { CommentsAside } from '../../shared/comments-aside/comments-aside';
 
 @Component({
-  imports: [FormatoFechaPipe, AsideNav, PublicacionCard],
+  imports: [FormatoFechaPipe, AsideNav, PublicacionCard, CommentsAside],
   selector: 'app-mi-perfil',
   styleUrl: './mi-perfil.scss',
   templateUrl: './mi-perfil.html',
@@ -24,6 +25,7 @@ export class MiPerfil implements OnInit {
   isLoadingPosts = false;
   postsError = '';
   likeError = '';
+  selectedCommentsPost: Post | null = null;
   readonly pendingPostIds = new Set<string>();
 
   ngOnInit(): void {
@@ -73,6 +75,14 @@ export class MiPerfil implements OnInit {
 
   hasLiked(post: Post, userId = this.userId ?? ''): boolean {
     return this.postLikes.hasLiked(post, userId);
+  }
+
+  openComments(post: Post): void {
+    this.selectedCommentsPost = post;
+  }
+
+  closeComments(): void {
+    this.selectedCommentsPost = null;
   }
 
   private loadPosts(): void {

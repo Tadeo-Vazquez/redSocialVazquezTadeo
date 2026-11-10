@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { CurrentUser } from './current-user';
+import { API_URL } from '../config/api-url.generated';
 
 export interface LoginRequest {
   loginInput: string;
@@ -20,7 +21,7 @@ export interface AuthResponse {
 })
 export class Auth {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/auth';
+  private readonly apiUrl = `${API_URL}/auth`;
 
   login(data: LoginRequest): Observable<AuthResponse> {
     console.log('[Auth] Enviando solicitud de login.', { loginInput: data.loginInput });

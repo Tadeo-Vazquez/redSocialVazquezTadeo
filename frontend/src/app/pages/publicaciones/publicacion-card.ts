@@ -14,9 +14,11 @@ export class PublicacionCard {
   @Input() actionPending = false;
   @Input() showOwnerActions = true;
   @Input() deletePending = false;
+  @Input() showCommentsAction = false;
 
   @Output() likeRequested = new EventEmitter<Post>();
   @Output() deleteRequested = new EventEmitter<Post>();
+  @Output() commentsRequested = new EventEmitter<Post>();
 
   get isOwnPost(): boolean {
     return this.post.usuarioId === this.currentUserId;

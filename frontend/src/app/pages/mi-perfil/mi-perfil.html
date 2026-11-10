@@ -70,11 +70,19 @@
               [currentUserId]="userId ?? ''"
               [actionPending]="pendingPostIds.has(post._id)"
               [showOwnerActions]="false"
+              [showCommentsAction]="true"
               (likeRequested)="toggleLike($event)"
+              (commentsRequested)="openComments($event)"
             />
           }
         </div>
       }
     </section>
   </main>
+}
+@if (selectedCommentsPost) {
+  <app-comments-aside
+    [post]="selectedCommentsPost"
+    (closed)="closeComments()"
+  />
 }

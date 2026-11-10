@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { API_URL } from '../config/api-url.generated';
 
 export interface Post {
   _id: string;
@@ -38,7 +39,7 @@ export interface CreatePostResponse {
 })
 export class Posts {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/posts';
+  private readonly apiUrl = `${API_URL}/posts`;
 
   createPost(data: FormData): Observable<CreatePostResponse> {
     return this.http.post<CreatePostResponse>(this.apiUrl, data);
