@@ -12,14 +12,10 @@ import {
 } from '@angular/core';
 import { finalize, timeout } from 'rxjs';
 import { Post, Posts } from '../../services/posts';
+import { Session } from '../../services/session';
+import { PostLikes } from '../../services/post-likes';
 import { AsideNav } from '../../shared/aside-nav/aside-nav';
 import { PublicacionCard } from './publicacion-card';
-
-interface CurrentUser {
-  _id?: string;
-  id?: string;
-  perfil?: string;
-}
 
 @Component({
   imports: [AsideNav, PublicacionCard],
@@ -31,8 +27,10 @@ export class Publicaciones implements OnInit {
   private readonly postsService = inject(Posts);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly injector = inject(Injector);
+  private readonly session = inject(Session);
+  private readonly postLikes = inject(PostLikes);
 
-  readonly currentUser = this.readCurrentUser();
+  readonly currentUser = this.session.getCurrentUser();
   pageSize = 3;
   posts: Post[] = [];
   offset = 0;
@@ -146,16 +144,12 @@ export class Publicaciones implements OnInit {
       return;
     }
 
-    const alreadyLiked = this.hasLiked(post, userId);
+    const likeAction = this.postLikes.toggle(post, userId);
     this.pendingPostIds.add(post._id);
     this.actionError = '';
     this.changeDetectorRef.markForCheck();
 
-    const action = alreadyLiked
-      ? this.postsService.removeLike(post._id, userId)
-      : this.postsService.addLike(post._id, userId);
-
-    action
+    likeAction.request
       .pipe(
         timeout(10000),
         finalize(() => {
@@ -165,23 +159,10 @@ export class Publicaciones implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          this.posts = this.posts.map((item) => {
-            if (item._id !== post._id) {
-              return item;
-            }
-
-            const likes = (item.likes ?? []).filter(
-              (like) => this.likeUserId(like) !== userId,
-            );
-            if (response.likedByUser) {
-              likes.push(userId);
-            }
-
-            return { ...item, likes, likesCount: response.likes };
-          });
+          this.posts = this.postLikes.applyResponse(this.posts, post._id, userId, response);
         },
         error: () => {
-          this.actionError = alreadyLiked
+          this.actionError = likeAction.alreadyLiked
             ? 'No se pudo quitar el me gusta. Inténtalo nuevamente.'
             : 'No se pudo registrar el me gusta. Inténtalo nuevamente.';
         },
@@ -189,7 +170,7 @@ export class Publicaciones implements OnInit {
   }
 
   hasLiked(post: Post, userId = this.currentUserId): boolean {
-    return !!userId && (post.likes ?? []).some((like) => this.likeUserId(like) === userId);
+    return this.postLikes.hasLiked(post, userId);
   }
 
   trackPost(_index: number, post: Post): string {
@@ -232,19 +213,6 @@ export class Publicaciones implements OnInit {
       });
   }
 
-  private readCurrentUser(): CurrentUser | null {
-    try {
-      const storedUser = sessionStorage.getItem('currentUser');
-      return storedUser ? (JSON.parse(storedUser) as CurrentUser) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private likeUserId(like: string | { _id?: string }): string {
-    return typeof like === 'string' ? like : like._id ?? '';
-  }
-
   private getColumnCount(): number {
     if (window.innerWidth <= 520) {
       return 1;
@@ -284,26 +252,16 @@ export class Publicaciones implements OnInit {
     if (cardWidth <= 0 || cardHeight <= 0) {
       return;
     }
-    const columns = Math.max(
-      1,
-      Math.floor((gridWidth + columnGap) / (cardWidth + columnGap)),
-    );
+    const columns = Math.max(1, Math.floor((gridWidth + columnGap) / (cardWidth + columnGap)));
 
     const pageStyles = window.getComputedStyle(feedPage);
     const paginationStyles = window.getComputedStyle(pagination);
     const bottomPadding = Number.parseFloat(pageStyles.paddingBottom) || 0;
     const paginationMargin = Number.parseFloat(paginationStyles.marginTop) || 0;
-    const reservedPagination =
-      pagination.getBoundingClientRect().height + paginationMargin;
+    const reservedPagination = pagination.getBoundingClientRect().height + paginationMargin;
     const availableHeight =
-      window.innerHeight -
-      grid.getBoundingClientRect().top -
-      bottomPadding -
-      reservedPagination;
-    const rows = Math.max(
-      1,
-      Math.floor((availableHeight + rowGap) / (cardHeight + rowGap)),
-    );
+      window.innerHeight - grid.getBoundingClientRect().top - bottomPadding - reservedPagination;
+    const rows = Math.max(1, Math.floor((availableHeight + rowGap) / (cardHeight + rowGap)));
     const nextPageSize = Math.min(100, columns * rows);
 
     if (nextPageSize === this.pageSize) {

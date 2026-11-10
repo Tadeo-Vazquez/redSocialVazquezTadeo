@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Session } from '../../services/session';
 
 @Component({
   imports: [RouterLink, RouterLinkActive],
@@ -9,19 +10,11 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class AsideNav {
   private readonly router = inject(Router);
-  readonly currentUser = this.readCurrentUser();
-
-  private readCurrentUser(): Record<string, unknown> | null {
-    try {
-      const storedUser = sessionStorage.getItem('currentUser');
-      return storedUser ? (JSON.parse(storedUser) as Record<string, unknown>) : null;
-    } catch {
-      return null;
-    }
-  }
+  private readonly session = inject(Session);
+  readonly currentUser = this.session.getCurrentUser();
 
   logout(): void {
-    sessionStorage.removeItem('currentUser');
+    this.session.clear();
     void this.router.navigate(['/login']);
   }
 }

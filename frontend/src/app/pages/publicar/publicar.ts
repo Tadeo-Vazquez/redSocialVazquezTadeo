@@ -1,26 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import {
-  ImageCropperComponent,
-  ImageCroppedEvent,
-  ImageTransform,
-} from 'ngx-image-cropper';
+import { ImageCropperComponent, ImageCroppedEvent, ImageTransform } from 'ngx-image-cropper';
 import { Posts } from '../../services/posts';
 import { AsideNav } from '../../shared/aside-nav/aside-nav';
-
-interface CurrentUser {
-  _id?: string;
-  id?: string;
-}
+import { Session } from '../../services/session';
 
 @Component({
   imports: [AsideNav, ReactiveFormsModule, ImageCropperComponent, DecimalPipe],
@@ -32,7 +19,8 @@ export class Publicar implements OnDestroy {
   private readonly postsService = inject(Posts);
   private readonly router = inject(Router);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
-  readonly currentUser = this.readCurrentUser();
+  private readonly session = inject(Session);
+  readonly currentUser = this.session.getCurrentUser();
 
   readonly postForm = new FormGroup({
     titulo: new FormControl('', {
@@ -175,8 +163,7 @@ export class Publicar implements OnDestroy {
 
     const usuarioId = this.currentUser?._id ?? this.currentUser?.id;
     if (!usuarioId) {
-      this.errorMessage =
-        'No se pudo identificar tu sesión. Cierra sesión e inicia nuevamente.';
+      this.errorMessage = 'No se pudo identificar tu sesión. Cierra sesión e inicia nuevamente.';
       return;
     }
 
@@ -216,15 +203,6 @@ export class Publicar implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearImagePreview();
-  }
-
-  private readCurrentUser(): CurrentUser | null {
-    try {
-      const storedUser = sessionStorage.getItem('currentUser');
-      return storedUser ? (JSON.parse(storedUser) as CurrentUser) : null;
-    } catch {
-      return null;
-    }
   }
 
   private clearImagePreview(): void {

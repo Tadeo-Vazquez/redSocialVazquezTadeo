@@ -1,13 +1,9 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
+import { Session } from '../../services/session';
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
@@ -17,6 +13,7 @@ import { Auth } from '../../services/auth';
 })
 export class Login {
   private readonly auth = inject(Auth);
+  private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
@@ -69,18 +66,14 @@ export class Login {
         // Guarda una copia del usuario autenticado en sessionStorage para
         // conservar su información mientras dure la sesión del navegador.
         try {
-          sessionStorage.setItem('currentUser', JSON.stringify(response.user));
+          this.session.setCurrentUser(response.user);
           console.log('[Login] Sesión iniciada correctamente:', response.user);
         } catch (storageError) {
           console.error('[Login] No se pudo guardar la sesión en sessionStorage.', storageError);
         }
 
-        const perfil = typeof response.user['perfil'] === 'string'
-          ? response.user['perfil']
-          : '';
-        const destination = perfil === 'administrador'
-          ? '/admin-dashboard'
-          : '/publicaciones';
+        const perfil = typeof response.user.perfil === 'string' ? response.user.perfil : '';
+        const destination = perfil === 'administrador' ? '/admin-dashboard' : '/publicaciones';
 
         // Redirige según el rol devuelto por el backend.
         void this.router.navigate([destination]).then(
@@ -102,9 +95,7 @@ export class Login {
         this.isLoading = false;
         console.error('[Login] Error en el proceso de inicio de sesión.', error);
         const responseMessage =
-          typeof error.error === 'object' && error.error
-            ? error.error.message
-            : undefined;
+          typeof error.error === 'object' && error.error ? error.error.message : undefined;
         this.errorMessage =
           typeof responseMessage === 'string'
             ? responseMessage

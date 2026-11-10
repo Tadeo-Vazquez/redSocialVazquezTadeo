@@ -1,21 +1,13 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { Session } from '../services/session';
 
 export const adminGuard: CanActivateFn = (): boolean | UrlTree => {
   const router = inject(Router);
-
-  try {
-    const storedUser = sessionStorage.getItem('currentUser');
-    if (storedUser) {
-      const user = JSON.parse(storedUser) as Record<string, unknown>;
-      if (user['perfil'] === 'administrador') {
-        return true;
-      }
-      return router.createUrlTree(['/publicaciones']);
-    }
-  } catch {
-    sessionStorage.removeItem('currentUser');
+  const currentUser = inject(Session).getCurrentUser();
+  if (currentUser?.perfil === 'administrador') {
+    return true;
   }
 
-  return router.createUrlTree(['/login']);
+  return currentUser ? router.createUrlTree(['/publicaciones']) : router.createUrlTree(['/login']);
 };

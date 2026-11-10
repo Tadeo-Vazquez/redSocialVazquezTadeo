@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { CurrentUser } from './current-user';
 
 export interface LoginRequest {
   loginInput: string;
@@ -11,7 +12,7 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   message: string;
-  user: Record<string, unknown>;
+  user: CurrentUser;
 }
 
 @Injectable({

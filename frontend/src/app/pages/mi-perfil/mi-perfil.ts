@@ -4,18 +4,8 @@ import { FormatoFechaPipe } from '../../pipes/formato-fecha.pipe';
 import { AsideNav } from '../../shared/aside-nav/aside-nav';
 import { Post, Posts } from '../../services/posts';
 import { PublicacionCard } from '../publicaciones/publicacion-card';
-
-interface CurrentUser {
-  _id?: string;
-  id?: string;
-  nombre?: string;
-  apellido?: string;
-  email?: string;
-  username?: string;
-  fechaNacimiento?: string;
-  descripcionBreve?: string;
-  avatarUrl?: string;
-}
+import { Session } from '../../services/session';
+import { PostLikes } from '../../services/post-likes';
 
 @Component({
   imports: [FormatoFechaPipe, AsideNav, PublicacionCard],
@@ -26,8 +16,10 @@ interface CurrentUser {
 export class MiPerfil implements OnInit {
   private readonly postsService = inject(Posts);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly session = inject(Session);
+  private readonly postLikes = inject(PostLikes);
 
-  readonly currentUser = this.readCurrentUser();
+  readonly currentUser = this.session.getCurrentUser();
   posts: Post[] = [];
   isLoadingPosts = false;
   postsError = '';
@@ -54,16 +46,12 @@ export class MiPerfil implements OnInit {
       return;
     }
 
-    const alreadyLiked = this.hasLiked(post, userId);
+    const likeAction = this.postLikes.toggle(post, userId);
     this.pendingPostIds.add(post._id);
     this.likeError = '';
     this.changeDetectorRef.markForCheck();
 
-    const action = alreadyLiked
-      ? this.postsService.removeLike(post._id, userId)
-      : this.postsService.addLike(post._id, userId);
-
-    action
+    likeAction.request
       .pipe(
         timeout(10000),
         finalize(() => {
@@ -73,23 +61,10 @@ export class MiPerfil implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          this.posts = this.posts.map((item) => {
-            if (item._id !== post._id) {
-              return item;
-            }
-
-            const likes = (item.likes ?? []).filter(
-              (like) => this.likeUserId(like) !== userId,
-            );
-            if (response.likedByUser) {
-              likes.push(userId);
-            }
-
-            return { ...item, likes, likesCount: response.likes };
-          });
+          this.posts = this.postLikes.applyResponse(this.posts, post._id, userId, response);
         },
         error: () => {
-          this.likeError = alreadyLiked
+          this.likeError = likeAction.alreadyLiked
             ? 'No se pudo quitar el me gusta. Inténtalo nuevamente.'
             : 'No se pudo registrar el me gusta. Inténtalo nuevamente.';
         },
@@ -97,11 +72,7 @@ export class MiPerfil implements OnInit {
   }
 
   hasLiked(post: Post, userId = this.userId ?? ''): boolean {
-    return !!userId && (post.likes ?? []).some((like) => this.likeUserId(like) === userId);
-  }
-
-  private likeUserId(like: string | { _id?: string }): string {
-    return typeof like === 'string' ? like : like._id ?? '';
+    return this.postLikes.hasLiked(post, userId);
   }
 
   private loadPosts(): void {
@@ -132,14 +103,5 @@ export class MiPerfil implements OnInit {
           this.postsError = 'No se pudieron cargar tus publicaciones.';
         },
       });
-  }
-
-  private readCurrentUser(): CurrentUser | null {
-    try {
-      const storedUser = sessionStorage.getItem('currentUser');
-      return storedUser ? (JSON.parse(storedUser) as CurrentUser) : null;
-    } catch {
-      return null;
-    }
   }
 }
