@@ -1,0 +1,160 @@
+<app-aside-nav></app-aside-nav>
+
+<main class="private-page">
+  <section class="publish-container" aria-labelledby="publish-title">
+    <header class="publish-heading">
+      <p class="eyebrow">Comparte con la comunidad</p>
+      <h1 id="publish-title">Crear nueva publicación</h1>
+      <div class="step-indicator" aria-label="Paso actual">
+        <span [class.current]="step === 1">1 <span>Imagen</span></span>
+        <span class="step-divider" aria-hidden="true"></span>
+        <span [class.current]="step === 2">2 <span>Detalles</span></span>
+      </div>
+    </header>
+
+    <form class="publish-card" [formGroup]="postForm" (ngSubmit)="submit()" novalidate>
+      @if (step === 1) {
+        <div class="step-content">
+          <div class="step-copy">
+            <h2>Elige una imagen</h2>
+            <p>Agrega una imagen o continúa sin ella. La vista previa respeta el formato 1080 × 1440.</p>
+          </div>
+
+          <input
+            #imageInput
+            id="post-image"
+            class="file-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onImageSelected($event)"
+          />
+          @if (selectedImage) {
+            <div class="cropper-stage">
+              <image-cropper
+                [imageChangedEvent]="imageChangedEvent"
+                [maintainAspectRatio]="true"
+                [aspectRatio]="3 / 4"
+                [resizeToWidth]="1080"
+                [resizeToHeight]="1440"
+                [imageQuality]="85"
+                [transform]="imageTransform"
+                format="webp"
+                output="blob"
+                imageAltText="Recorta y posiciona la imagen para la publicación"
+                cropperFrameAriaLabel="Área de recorte 3:4"
+                (imageCropped)="onImageCropped($event)"
+                (transformChange)="onTransformChange($event)"
+                (loadImageFailed)="onCropperLoadFailed()"
+              />
+              <button
+                type="button"
+                class="remove-image"
+                aria-label="Quitar imagen"
+                title="Quitar imagen"
+                (click)="removeImage(imageInput)"
+              >
+                <img src="/delete.png" alt="" aria-hidden="true" />
+              </button>
+            </div>
+            <div class="cropper-controls">
+              <label for="image-zoom">Zoom</label>
+              <input
+                id="image-zoom"
+                type="range"
+                min="1"
+                max="3"
+                step="0.05"
+                [value]="imageTransform.scale ?? 1"
+                (input)="onZoomChange($event)"
+              />
+              <span>{{ (imageTransform.scale ?? 1) | number: '1.1-1' }}×</span>
+            </div>
+            <label class="change-image" for="post-image">Cambiar imagen</label>
+          } @else {
+            <label class="upload-area" for="post-image">
+            <span class="upload-icon" aria-hidden="true">+</span>
+            <span>Seleccionar imagen</span>
+            <small>JPG, PNG o WEBP. Máximo 5 MB.</small>
+            </label>
+          }
+          @if (imageError) {
+            <span class="field-error" role="alert">{{ imageError }}</span>
+          }
+
+          <button
+            class="submit-button"
+            type="button"
+            [disabled]="!!imageError || (!!selectedImage && !croppedImageBlob)"
+            (click)="continueToDetails()"
+          >
+            {{ continueLabel }}
+          </button>
+        </div>
+      } @else {
+        <div class="step-content">
+          @if (imagePreview) {
+            <div class="image-preview image-preview-details">
+            <img [src]="imagePreview" alt="Vista previa de la imagen seleccionada" />
+            </div>
+          } @else {
+            <div class="no-image-preview">Esta publicación se creará sin imagen.</div>
+          }
+
+          <div class="field">
+            <label for="titulo">Título</label>
+            <input
+            id="titulo"
+            formControlName="titulo"
+            maxlength="100"
+            placeholder="Dale un título a tu publicación"
+            [class.input-error]="postForm.controls.titulo.touched && postForm.controls.titulo.invalid"
+            />
+            @if (postForm.controls.titulo.touched && postForm.controls.titulo.hasError('required')) {
+            <span class="field-error">El título es obligatorio.</span>
+            } @else if (postForm.controls.titulo.touched && postForm.controls.titulo.hasError('maxlength')) {
+            <span class="field-error">El título no puede superar los 100 caracteres.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="descripcion">Descripción</label>
+            <textarea
+            id="descripcion"
+            formControlName="descripcion"
+            maxlength="1000"
+            rows="7"
+            placeholder="¿Qué quieres contar?"
+            [class.input-error]="postForm.controls.descripcion.touched && postForm.controls.descripcion.invalid"
+            ></textarea>
+            <div class="field-footer">
+            @if (postForm.controls.descripcion.touched && postForm.controls.descripcion.hasError('required')) {
+              <span class="field-error">La descripción es obligatoria.</span>
+            } @else if (postForm.controls.descripcion.touched && postForm.controls.descripcion.hasError('maxlength')) {
+              <span class="field-error">La descripción no puede superar los 1000 caracteres.</span>
+            }
+            <span class="character-count">{{ postForm.controls.descripcion.value.length }}/1000</span>
+            </div>
+          </div>
+
+          @if (errorMessage) {
+            <div class="form-error" role="alert">{{ errorMessage }}</div>
+          }
+
+          <div class="step-actions">
+            <button class="back-button" type="button" [disabled]="isSubmitting" (click)="backToImage()">
+            Volver
+            </button>
+            <button class="submit-button" type="submit" [disabled]="isSubmitting">
+            @if (isSubmitting) {
+              <span class="spinner" aria-hidden="true"></span>
+              Publicando...
+            } @else {
+              Crear publicación
+            }
+            </button>
+          </div>
+        </div>
+      }
+    </form>
+  </section>
+</main>

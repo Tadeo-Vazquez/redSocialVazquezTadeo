@@ -35,9 +35,15 @@
 
     <section class="posts-section" aria-labelledby="posts-title">
       <div class="posts-heading">
-        <h2 id="posts-title">Mis publicaciones</h2>
+        <h2 id="posts-title">Ultimas publicaciones</h2>
         <span>{{ posts.length }}</span>
       </div>
+
+      @if (likeError) {
+        <div class="posts-state posts-error" role="alert">
+          <p>{{ likeError }}</p>
+        </div>
+      }
 
       @if (isLoadingPosts) {
         <div class="posts-state" aria-live="polite">
@@ -59,33 +65,13 @@
       } @else {
         <div class="posts-grid">
           @for (post of posts; track post._id) {
-            <article class="post-card">
-              @if (post.imagenUrl) {
-                <img
-                  class="post-image"
-                  [src]="post.imagenUrl"
-                  [alt]="post.titulo"
-                />
-              } @else {
-                <div class="post-image post-image-placeholder" aria-label="Publicación sin imagen">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-                    <path d="M8 9h8M8 13h5"></path>
-                  </svg>
-                </div>
-              }
-
-              <div class="post-content">
-                <h3>{{ post.titulo }}</h3>
-                <p>{{ post.descripcion }}</p>
-                <div class="post-meta">
-                  @if (post.createdAt) {
-                    <span>{{ post.createdAt | formatoFecha }}</span>
-                  }
-                  <span>♥ {{ post.likesCount ?? post.likes?.length ?? 0 }}</span>
-                </div>
-              </div>
-            </article>
+            <app-publicacion-card
+              [post]="post"
+              [currentUserId]="userId ?? ''"
+              [actionPending]="pendingPostIds.has(post._id)"
+              [showOwnerActions]="false"
+              (likeRequested)="toggleLike($event)"
+            />
           }
         </div>
       }

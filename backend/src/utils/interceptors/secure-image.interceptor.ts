@@ -14,7 +14,15 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_IMAGE_PIXELS = 20_000_000;
 export const MAX_IMAGE_WIDTH = 1600;
 
-export function SecureImageInterceptor(fieldName = 'image'): Type<NestInterceptor> {
+interface StandardImageSize {
+  width: number;
+  height: number;
+}
+
+export function SecureImageInterceptor(
+  fieldName = 'image',
+  standardSize?: StandardImageSize,
+): Type<NestInterceptor> {
   @Injectable()
   class SecureImageInterceptorClass implements NestInterceptor {
     async intercept(
@@ -25,7 +33,10 @@ export function SecureImageInterceptor(fieldName = 'image'): Type<NestIntercepto
       await this.receiveFile(request, fieldName);
 
       if (request.file) {
-        await this.normalizeAndSave(request.file as Express.Multer.File);
+        await this.normalizeAndSave(
+          request.file as Express.Multer.File,
+          standardSize,
+        );
       }
 
       return next.handle();
@@ -75,7 +86,10 @@ export function SecureImageInterceptor(fieldName = 'image'): Type<NestIntercepto
       });
     }
 
-    private async normalizeAndSave(file: Express.Multer.File): Promise<void> {
+    private async normalizeAndSave(
+      file: Express.Multer.File,
+      size?: StandardImageSize,
+    ): Promise<void> {
       if (!file.buffer || file.buffer.length === 0) {
         throw new BadRequestException('La imagen está vacía.');
       }
@@ -117,14 +131,23 @@ export function SecureImageInterceptor(fieldName = 'image'): Type<NestIntercepto
 
       let normalizedBuffer: Buffer;
       try {
-        normalizedBuffer = await sharp(file.buffer, { failOn: 'error' })
-          .rotate()
-          .resize({
-            width: MAX_IMAGE_WIDTH,
-            height: MAX_IMAGE_WIDTH,
-            fit: 'inside',
-            withoutEnlargement: true,
-          })
+        const image = sharp(file.buffer, { failOn: 'error' }).rotate();
+        normalizedBuffer = await image
+          .resize(
+            size
+              ? {
+                  width: size.width,
+                  height: size.height,
+                  fit: 'contain',
+                  background: { r: 0, g: 0, b: 0, alpha: 0 },
+                }
+              : {
+                  width: MAX_IMAGE_WIDTH,
+                  height: MAX_IMAGE_WIDTH,
+                  fit: 'inside',
+                  withoutEnlargement: true,
+                },
+          )
           .toFormat('webp', { quality: 85 })
           .toBuffer();
       } catch {

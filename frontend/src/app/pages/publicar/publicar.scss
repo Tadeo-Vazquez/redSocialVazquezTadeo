@@ -1,0 +1,442 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.private-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flow-root;
+  padding: 48px 32px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(112, 70, 250, 0.18), transparent 24rem),
+    radial-gradient(circle at 85% 80%, rgba(235, 55, 160, 0.12), transparent 25rem),
+    rgb(15, 14, 26);
+  color: #fff;
+}
+
+.publish-container {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.publish-heading {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: rgb(235, 55, 160);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.publish-heading h1 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 4vw, 42px);
+}
+
+.publish-heading > p:last-child {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.step-indicator > span:not(.step-divider) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-indicator .current {
+  color: #fff;
+}
+
+.step-divider {
+  width: 52px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.step-copy h2 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 20px;
+}
+
+.step-copy p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.5;
+}
+
+.publish-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: clamp(22px, 5vw, 36px);
+  border: 1px solid rgba(112, 70, 250, 0.3);
+  border-radius: 20px;
+  background: rgba(21, 19, 36, 0.88);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.field > label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field > label span,
+.character-count {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 400;
+}
+
+.field input:not([type='file']),
+.field textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+  padding: 13px 15px;
+  box-sizing: border-box;
+  background: rgba(10, 9, 18, 0.58);
+  color: #fff;
+  font: inherit;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: rgb(151, 110, 255);
+  box-shadow: 0 0 0 3px rgba(112, 70, 250, 0.16);
+}
+
+.field textarea {
+  min-height: 170px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.field input.input-error,
+.field textarea.input-error {
+  border-color: #ff6b9a;
+}
+
+.field-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-error {
+  color: #ff91b5;
+  font-size: 13px;
+}
+
+.character-count {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.upload-area {
+  width: min(100%, 340px);
+  aspect-ratio: 3 / 4;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  box-sizing: border-box;
+  border: 1px dashed rgba(151, 110, 255, 0.65);
+  border-radius: 14px;
+  background: rgba(112, 70, 250, 0.07);
+  color: #fff;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.upload-area:hover {
+  border-color: rgb(235, 55, 160);
+  background: rgba(112, 70, 250, 0.13);
+}
+
+.upload-area small {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.upload-icon {
+  color: rgb(235, 55, 160);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.cropper-stage {
+  position: relative;
+  width: min(100%, 440px);
+  height: min(68vh, 620px);
+  min-height: 340px;
+  align-self: center;
+  overflow: hidden;
+  border: 1px solid rgba(151, 110, 255, 0.35);
+  border-radius: 14px;
+  background: rgba(10, 9, 18, 0.72);
+}
+
+.cropper-stage image-cropper {
+  display: block;
+  width: 100%;
+  height: 100%;
+  --cropper-outline-color: rgba(15, 14, 26, 0.78);
+  --cropper-overlay-color: rgba(10, 9, 18, 0.55);
+}
+
+.cropper-controls {
+  width: min(100%, 440px);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  align-self: center;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+}
+
+.cropper-controls input[type='range'] {
+  width: 100%;
+  accent-color: rgb(185, 130, 255);
+}
+
+.cropper-controls span {
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.image-preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgba(10, 9, 18, 0.58);
+}
+
+.image-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.image-preview-select {
+  width: min(100%, 360px);
+  aspect-ratio: 3 / 4;
+  align-self: center;
+  border: 1px solid rgba(151, 110, 255, 0.35);
+}
+
+.image-preview-details {
+  width: min(100%, 270px);
+  aspect-ratio: 3 / 4;
+  align-self: center;
+  border: 1px solid rgba(151, 110, 255, 0.35);
+}
+
+.change-image {
+  align-self: center;
+  margin-top: -12px;
+  color: #c3aeff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.no-image-preview {
+  padding: 18px;
+  border: 1px dashed rgba(151, 110, 255, 0.45);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.remove-image {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(15, 14, 26, 0.88);
+  cursor: pointer;
+}
+.remove-image:hover {
+  background: rgba(15, 14, 26, 0.98);
+  transform: scale(1.1);
+}
+
+.remove-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.form-error {
+  border: 1px solid rgba(255, 107, 154, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: rgba(255, 107, 154, 0.09);
+  color: #ff91b5;
+  font-size: 14px;
+}
+
+.submit-button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(110deg, rgb(112, 70, 250), rgb(207, 48, 177));
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.step-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.step-actions .submit-button {
+  flex: 1;
+}
+
+.back-button {
+  min-width: 120px;
+  min-height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 11px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.back-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.back-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.submit-button:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.spinner {
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .private-page {
+    padding: 28px 20px 36px 94px;
+  }
+}
+
+@media (max-width: 520px) {
+  .private-page {
+    padding: 24px 14px 30px 88px;
+  }
+
+  .publish-card {
+    gap: 20px;
+    padding: 20px 16px;
+  }
+
+  .step-content {
+    gap: 20px;
+  }
+
+  .step-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cropper-stage {
+    height: min(58vh, 520px);
+    min-height: 280px;
+  }
+
+  .back-button {
+    width: 100%;
+  }
+}

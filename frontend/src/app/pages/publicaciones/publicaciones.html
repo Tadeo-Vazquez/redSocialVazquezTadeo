@@ -1,4 +1,78 @@
 <app-aside-nav></app-aside-nav>
-<main class="private-page">
-  <p>publicaciones works!</p>
+
+<main class="private-page" #feedPage>
+  <section class="feed-container" aria-labelledby="feed-title">
+    <header class="feed-header">
+      <div>
+        <p class="eyebrow">Comunidad</p>
+        <h1 id="feed-title">Publicaciones</h1>
+      </div>
+
+      <label class="sort-control">
+        <span>Ordenar por</span>
+        <select [value]="ordenar" (change)="onSortChange($event)">
+          <option value="fecha">Más recientes</option>
+          <option value="likes">Más me gusta</option>
+        </select>
+      </label>
+    </header>
+
+    @if (actionError) {
+      <div class="action-error" role="alert">{{ actionError }}</div>
+    }
+
+    @if (isLoading) {
+      <div class="feed-state" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Cargando publicaciones...</p>
+      </div>
+    } @else if (loadError) {
+      <div class="feed-state feed-error" role="alert">
+        <h2>No se pudo cargar el feed</h2>
+        <p>{{ loadError }}</p>
+        <button class="secondary-button" type="button" (click)="loadPosts()">
+          Reintentar
+        </button>
+      </div>
+    } @else if (posts.length === 0) {
+      <div class="feed-state empty-feed">
+        <img src="/imagen.png" alt="" aria-hidden="true" />
+        <h2>Aún no hay publicaciones</h2>
+        <p>Cuando haya publicaciones, aparecerán aquí.</p>
+      </div>
+    } @else {
+      <div class="posts-grid" #postsGrid>
+        @for (post of posts; track trackPost($index, post)) {
+          <app-publicacion-card
+            [post]="post"
+            [currentUserId]="currentUserId"
+            [actionPending]="pendingPostIds.has(post._id)"
+            [deletePending]="deletingPostIds.has(post._id)"
+            (likeRequested)="toggleLike($event)"
+            (deleteRequested)="deletePost($event)"
+          />
+        }
+      </div>
+
+      <nav #pagination class="pagination" aria-label="Paginación de publicaciones">
+        <button
+          class="secondary-button"
+          type="button"
+          [disabled]="!canGoToPreviousPage"
+          (click)="goToPreviousPage()"
+        >
+          Anterior
+        </button>
+        <span>Página {{ currentPage }} de {{ totalPages }}</span>
+        <button
+          class="secondary-button"
+          type="button"
+          [disabled]="!canGoToNextPage"
+          (click)="goToNextPage()"
+        >
+          Siguiente
+        </button>
+      </nav>
+    }
+  </section>
 </main>

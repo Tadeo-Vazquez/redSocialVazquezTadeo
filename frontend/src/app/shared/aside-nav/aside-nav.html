@@ -28,6 +28,13 @@
         <span>Mi perfil</span>
       </a>
     }
+
+    <a routerLink="/publicar" routerLinkActive="active" aria-label="Crear publicación">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+      <span>Crear</span>
+    </a>
   </nav>
 
   <button class="logout-button" type="button" (click)="logout()">

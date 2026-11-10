@@ -1,0 +1,69 @@
+<article class="post-card">
+  <div class="post-media">
+    @if (post.imagenUrl) {
+      <img class="post-image" [src]="post.imagenUrl" [alt]="post.titulo" />
+    } @else {
+      <div class="post-image post-image-placeholder" aria-label="Publicación sin imagen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+          <path d="M8 9h8M8 13h5"></path>
+        </svg>
+      </div>
+    }
+
+    @if (isOwnPost && showOwnerActions) {
+      <button
+        class="delete-post-button"
+        type="button"
+        [disabled]="deletePending"
+        [attr.aria-label]="deletePending ? 'Eliminando publicación' : 'Eliminar publicación'"
+        title="Eliminar publicación"
+        (click)="deleteRequested.emit(post)"
+      >
+        <img src="/delete.png" alt="" aria-hidden="true" />
+      </button>
+    }
+  </div>
+
+  <div class="post-content">
+    <div class="post-author">
+      @if (post.usuario?.avatarUrl) {
+        <img [src]="post.usuario?.avatarUrl" [alt]="'Foto de ' + authorName" />
+      } @else {
+        <span class="author-placeholder" aria-hidden="true">
+          {{ authorName.charAt(0).toUpperCase() }}
+        </span>
+      }
+      <span class="author-name">{{ authorName }}</span>
+      @if (post.createdAt) {
+        <time>{{ post.createdAt | formatoFecha }}</time>
+      }
+    </div>
+
+    <h2>{{ post.titulo }}</h2>
+    <p class="post-description">{{ post.descripcion }}</p>
+    <div class="post-meta">
+      <div class="like-counter">
+        @if (currentUserId) {
+          <button
+            class="like-toggle"
+            type="button"
+            [disabled]="actionPending"
+            [attr.aria-label]="hasLiked ? 'Quitar me gusta' : 'Me gusta'"
+            [attr.title]="hasLiked ? 'Quitar me gusta' : 'Me gusta'"
+            (click)="likeRequested.emit(post)"
+          >
+            <img
+              [src]="hasLiked ? '/like.png' : '/unlike.png'"
+              alt=""
+              aria-hidden="true"
+            />
+          </button>
+        }
+        <span class="likes-count" aria-label="Cantidad de me gusta">
+          {{ likesCount }}
+        </span>
+      </div>
+    </div>
+  </div>
+</article>

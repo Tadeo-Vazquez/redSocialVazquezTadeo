@@ -6,12 +6,14 @@ import { MiPerfil } from './pages/mi-perfil/mi-perfil';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
 import { AdminDashboard } from './pages/admin-dashboard/admin-dashboard';
+import { Publicar } from './pages/publicar/publicar';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'registro', component: Registro },
   { path: 'publicaciones', component: Publicaciones, canActivate: [authGuard] },
+  { path: 'publicar', component: Publicar, canActivate: [authGuard] },
   { path: 'mi-perfil', component: MiPerfil, canActivate: [authGuard] },
   { path: 'admin-dashboard', component: AdminDashboard, canActivate: [adminGuard] },
   { path: '**', redirectTo: 'login' },

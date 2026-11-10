@@ -28,7 +28,9 @@ export class PostsController {
   // POST /posts: recibe los datos validados y una imagen opcional.
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(SecureImageInterceptor('image'))
+  @UseInterceptors(
+    SecureImageInterceptor('image', { width: 1080, height: 1440 }),
+  )
   async create(
     @Body() dto: CreatePostDto,
     @UploadedFile() image?: Express.Multer.File,
