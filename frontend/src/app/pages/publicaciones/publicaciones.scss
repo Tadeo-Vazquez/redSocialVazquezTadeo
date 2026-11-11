@@ -1,14 +1,18 @@
 :host {
-  display: block;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
   min-height: 100vh;
   min-height: 100dvh;
 }
 
 .private-page {
+  grid-column: 2;
+  grid-row: 1;
   min-height: 100vh;
   min-height: 100dvh;
   display: flow-root;
-  width: 100%;
+  min-width: 0;
+  width: auto;
   padding: 32px;
   box-sizing: border-box;
   background:
@@ -19,7 +23,7 @@
 }
 
 .feed-container {
-  width: min(1080px, 100%);
+  width: min(1000px, 100%);
   min-height: calc(100vh - 64px);
   min-height: calc(100dvh - 64px);
   display: flex;
@@ -32,7 +36,7 @@
   align-items: space-between;
   justify-content: space-between;
   gap: 24px;
-  width: min(1080px, 100%);
+  width: min(1000px, 100%);
   margin: 0 auto 28px;
 }
 

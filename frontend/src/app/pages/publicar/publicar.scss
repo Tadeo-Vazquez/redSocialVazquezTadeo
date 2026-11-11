@@ -1,13 +1,18 @@
 :host {
-  display: block;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
   min-height: 100vh;
   min-height: 100dvh;
 }
 
 .private-page {
+  grid-column: 2;
+  grid-row: 1;
   min-height: 100vh;
   min-height: 100dvh;
   display: flow-root;
+  min-width: 0;
+  width: auto;
   padding: 48px 32px;
   box-sizing: border-box;
   background:
@@ -46,29 +51,45 @@
 }
 
 .step-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 24px;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 13px;
-  font-weight: 700;
+  display: grid;
+  gap: 10px;
+  width: min(100%, 760px);
+  margin: 24px auto 0;
 }
 
-.step-indicator > span:not(.step-divider) {
-  display: inline-flex;
-  align-items: center;
+.step-progress,
+.step-labels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.step-indicator .current {
-  color: #fff;
+.step-segment {
+  height: 4px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: background-color 0.4s ease, transform 0.3s ease;
 }
 
-.step-divider {
-  width: 52px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.22);
+.step-segment.active,
+.step-segment.completed {
+  background: linear-gradient(90deg, #833ab4, #fd1d1d, #fcb045);
+  transform: scaleY(1.15);
+}
+
+.step-label {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+  transition: color 0.4s ease, opacity 0.4s ease;
+}
+
+.step-label.active,
+.step-label.completed {
+  color: #fff;
+  opacity: 1;
 }
 
 .step-content {
@@ -409,13 +430,13 @@
 
 @media (max-width: 760px) {
   .private-page {
-    padding: 28px 20px 36px 94px;
+    padding: 28px 20px 36px;
   }
 }
 
 @media (max-width: 520px) {
   .private-page {
-    padding: 24px 14px 30px 88px;
+    padding: 24px 14px 30px;
   }
 
   .publish-card {

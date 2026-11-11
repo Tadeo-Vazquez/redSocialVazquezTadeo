@@ -5,10 +5,33 @@
     <header class="publish-heading">
       <p class="eyebrow">Comparte con la comunidad</p>
       <h1 id="publish-title">Crear nueva publicación</h1>
-      <div class="step-indicator" aria-label="Paso actual">
-        <span [class.current]="step === 1">1 <span>Imagen</span></span>
-        <span class="step-divider" aria-hidden="true"></span>
-        <span [class.current]="step === 2">2 <span>Detalles</span></span>
+      <div class="step-indicator" aria-label="Progreso de creación de publicación">
+        <div class="step-progress" aria-hidden="true">
+          <span
+            class="step-segment"
+            [class.active]="step === 1"
+            [class.completed]="step > 1"
+          ></span>
+          <span
+            class="step-segment"
+            [class.active]="step === 2"
+            [class.completed]="step > 2"
+          ></span>
+        </div>
+        <div class="step-labels">
+          <span
+            class="step-label"
+            [class.active]="step === 1"
+            [class.completed]="step > 1"
+            [attr.aria-current]="step === 1 ? 'step' : null"
+          >1. IMAGEN</span>
+          <span
+            class="step-label"
+            [class.active]="step === 2"
+            [class.completed]="step > 2"
+            [attr.aria-current]="step === 2 ? 'step' : null"
+          >2. DETALLES</span>
+        </div>
       </div>
     </header>
 

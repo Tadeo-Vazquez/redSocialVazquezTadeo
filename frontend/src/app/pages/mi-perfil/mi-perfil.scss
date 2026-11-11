@@ -1,14 +1,18 @@
 :host {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
   min-height: 100vh;
-  display: block;
 }
 
 .profile-page {
+  grid-column: 2;
+  grid-row: 1;
   min-height: 100vh;
   display: grid;
   align-content: start;
   justify-items: center;
-  width: 100%;
+  min-width: 0;
+  width: auto;
   padding: 32px;
   box-sizing: border-box;
   background:
@@ -70,7 +74,7 @@
 }
 
 .posts-section {
-  width: min(1080px, 100%);
+  width: min(1000px, 100%);
   margin-top: 24px;
 }
 

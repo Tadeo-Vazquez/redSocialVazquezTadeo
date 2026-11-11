@@ -176,14 +176,10 @@
   background: rgba(235, 55, 160, 0.14);
 }
 
-.comments-action svg {
+.comments-action img {
   width: 17px;
   height: 17px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  object-fit: contain;
 }
 
 .like-counter {
