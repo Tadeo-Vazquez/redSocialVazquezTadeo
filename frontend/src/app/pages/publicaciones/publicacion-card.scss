@@ -201,21 +201,19 @@
 }
 
 .like-toggle {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  border: 0;
-  border-radius: 50%;
-  padding: 4px;
-  background: transparent;
+  font: inherit;
   cursor: pointer;
-  transition: transform 140ms ease;
+  transition: transform 140ms ease, background 140ms ease;
 }
 
 .like-toggle:hover:not(:disabled) {
-  transform: scale(1.12);
+  transform: translateY(-1px);
+  background: linear-gradient(
+    135deg,
+    rgba(112, 70, 250, 0.38),
+    rgba(235, 55, 160, 0.3)
+  );
+  
 }
 
 .like-toggle:disabled {
@@ -224,8 +222,9 @@
 }
 
 .like-toggle img {
-  width: 100%;
-  height: 100%;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
   object-fit: contain;
 }
 

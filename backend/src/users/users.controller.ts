@@ -25,9 +25,10 @@ export class UsersController {
   }
 
   // PUT /users/:id
-  // Actualiza los campos de perfil enviados en el body y, opcionalmente, reemplaza la foto.
+  // Actualiza el perfil identificado por id. Los campos llegan como multipart/form-data
+  // porque la misma petición puede incluir la foto nueva.
   @Put(':id')
-  // Usa el interceptor seguro para recibir el campo multipart llamado "image".
+  // Antes de ejecutar update(), valida y normaliza el archivo del campo "image" si existe.
   @UseInterceptors(SecureImageInterceptor('image'))
   update(
     // Parametro de la URL que identifica al usuario que se va a modificar.

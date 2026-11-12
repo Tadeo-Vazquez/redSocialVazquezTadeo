@@ -97,6 +97,7 @@ export class MiPerfil implements OnInit {
   }
 
   onProfileUpdated(user: CurrentUser): void {
+    // Mantiene consistente la tarjeta del perfil y los datos usados al navegar por la app.
     this.currentUser = user;
     this.session.setCurrentUser(user);
     this.isEditProfileOpen = false;

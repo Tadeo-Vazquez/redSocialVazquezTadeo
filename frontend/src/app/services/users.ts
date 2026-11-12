@@ -21,6 +21,7 @@ export class Users {
     return this.http.get<UserProfileResponse>(`${this.apiUrl}/${id}`);
   }
 
+  // Envía el formulario multipart al PUT /users/:id; puede incluir una foto nueva.
   updateProfile(id: string, data: FormData): Observable<UserProfileResponse> {
     return this.http.put<UserProfileResponse>(`${this.apiUrl}/${id}`, data);
   }

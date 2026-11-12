@@ -7,8 +7,9 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-// DTO recibido al actualizar un perfil.
-// Todos sus campos son opcionales para permitir cambios parciales.
+// Contrato de los campos de texto aceptados por PUT /users/:id.
+// Son opcionales para admitir actualizaciones parciales; la foto se recibe aparte
+// como archivo multipart en UsersController, no como propiedad de este DTO.
 export class UpdateProfileDto {
   // El nombre puede omitirse y, si llega, debe ser texto no vacío.
   @IsOptional()

@@ -54,27 +54,29 @@
           <!-- <span>Ver comentarios</span> -->
         </button>
       }
-      <div class="like-counter">
-        @if (currentUserId) {
-          <button
-            class="like-toggle"
-            type="button"
-            [disabled]="actionPending"
-            [attr.aria-label]="hasLiked ? 'Quitar me gusta' : 'Me gusta'"
-            [attr.title]="hasLiked ? 'Quitar me gusta' : 'Me gusta'"
-            (click)="likeRequested.emit(post)"
-          >
-            <img
-              [src]="hasLiked ? '/like.png' : '/unlike.png'"
-              alt=""
-              aria-hidden="true"
-            />
-          </button>
-        }
-        <span class="likes-count" aria-label="Cantidad de me gusta">
-          {{ likesCount }}
-        </span>
-      </div>
+      @if (currentUserId) {
+        <button
+          class="like-counter like-toggle"
+          type="button"
+          [disabled]="actionPending"
+          [attr.aria-label]="(hasLiked ? 'Quitar me gusta' : 'Me gusta') + '. ' + likesCount + ' me gusta'"
+          [attr.title]="hasLiked ? 'Quitar me gusta' : 'Me gusta'"
+          (click)="likeRequested.emit(post)"
+        >
+          <img
+            [src]="hasLiked ? '/like.png' : '/unlike.png'"
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="likes-count" aria-hidden="true">{{ likesCount }}</span>
+        </button>
+      } @else {
+        <div class="like-counter">
+          <span class="likes-count" aria-label="Cantidad de me gusta">
+            {{ likesCount }}
+          </span>
+        </div>
+      }
     </div>
   </div>
 </article>

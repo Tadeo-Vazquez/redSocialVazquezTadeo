@@ -22,29 +22,44 @@
 
     <form [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
       <div class="avatar-field">
-        <div class="avatar-preview">
+        <button
+          class="avatar-picker"
+          type="button"
+          (click)="imageInput.click()"
+          [disabled]="isSaving"
+          [attr.aria-label]="imagePreview || user.avatarUrl ? 'Cambiar foto de perfil' : 'Seleccionar foto de perfil'"
+        >
           @if (imagePreview || user.avatarUrl) {
-            <img [src]="imagePreview || user.avatarUrl" alt="Vista previa de la foto de perfil" />
+            <img [src]="imagePreview || user.avatarUrl" alt="" />
+            <span class="edit-overlay" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 20h4l10.7-10.7a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4z" />
+                <path d="M13.5 6.5l4 4" />
+              </svg>
+            </span>
           } @else {
             <span aria-hidden="true">
               {{ user.nombre?.charAt(0) || 'U' }}{{ user.apellido?.charAt(0) || '' }}
             </span>
+            <span class="edit-overlay" aria-hidden="true">+</span>
           }
-        </div>
+        </button>
+        <input
+          #imageInput
+          id="profile-image"
+          class="file-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          (change)="onImageSelected($event)"
+          [disabled]="isSaving"
+        />
         <div class="avatar-copy">
-          <label for="profile-image">Foto de perfil</label>
-          <input
-            id="profile-image"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            (change)="onImageSelected($event)"
-            [disabled]="isSaving"
-          />
-          <small>JPG, PNG o WEBP. Máximo 5 MB.</small>
-          @if (imageError) {
-            <span class="field-error" role="alert">{{ imageError }}</span>
-          }
+          <strong>Foto de perfil</strong>
+          <p>JPG, PNG o WEBP. Máximo 5 MB.</p>
         </div>
+        @if (imageError) {
+          <span class="field-error image-error" role="alert">{{ imageError }}</span>
+        }
       </div>
 
       <div class="form-grid">

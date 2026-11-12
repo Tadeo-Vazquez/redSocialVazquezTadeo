@@ -43,6 +43,7 @@ export class UsersService {
     dto: UpdateProfileDto,
     image?: Express.Multer.File,
   ) {
+    // Impide consultar MongoDB con un identificador mal formado.
     this.validateId(id);
     // No se modifica fechaNacimiento directamente: primero se transforma en Date.
     const { fechaNacimiento, ...profileData } = dto;
@@ -57,7 +58,7 @@ export class UsersService {
       }
       update.fechaNacimiento = birthDate;
     }
-    // Solo se inicia una subida si el cliente envió una imagen nueva.
+    // Si llega una imagen, se guarda en Cloudinary y se actualiza la URL del avatar.
     if (image) {
       const uploadedImage = await this.cloudinaryService.uploadImage(
         image.buffer,
@@ -67,11 +68,11 @@ export class UsersService {
       update.avatarUrl = uploadedImage.secure_url;
     }
 
-    // Busca el usuario activo y aplica simultáneamente todos los cambios.
+    // $set conserva los campos omitidos; returnDocument: 'after' devuelve el perfil ya actualizado.
     const user = await this.userModel.findOneAndUpdate(
       { _id: id, isDeleted: false },
       { $set: update },
-      { new: true, runValidators: true },
+      { returnDocument: 'after', runValidators: true },
     );
 
     if (!user) {

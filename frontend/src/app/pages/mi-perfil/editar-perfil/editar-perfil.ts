@@ -15,6 +15,8 @@ import { finalize } from 'rxjs';
 import { CurrentUser } from '../../../services/current-user';
 import { Users } from '../../../services/users';
 
+// Modal de edición: carga los datos recibidos, actualiza el perfil por HTTP y
+// emite el usuario actualizado para que la pantalla y la sesión queden sincronizadas.
 @Component({
   imports: [ReactiveFormsModule],
   selector: 'app-editar-perfil',
@@ -26,6 +28,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   @Input({ required: true }) user!: CurrentUser;
+  // El padre cierra el modal o sincroniza su perfil cuando recibe estos eventos.
   @Output() closed = new EventEmitter<void>();
   @Output() profileUpdated = new EventEmitter<CurrentUser>();
 
@@ -59,6 +62,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // input[type=date] requiere YYYY-MM-DD; la API puede devolver un ISO con hora.
     this.profileForm.patchValue({
       nombre: this.user.nombre ?? '',
       apellido: this.user.apellido ?? '',
@@ -111,6 +115,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
 
     this.clearImagePreview();
     this.selectedImage = file;
+    // La URL local permite previsualizar el archivo antes de subirlo al servidor.
     this.imagePreview = URL.createObjectURL(file);
   }
 
@@ -129,6 +134,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
       return;
     }
 
+    // FormData permite enviar campos de texto y la foto opcional en una sola petición multipart.
     const formData = new FormData();
     const values = this.profileForm.getRawValue();
     formData.append('nombre', values.nombre.trim());
@@ -157,6 +163,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
           }
 
           this.clearImagePreview();
+          // El componente padre actualiza su vista y sessionStorage con estos datos.
           this.profileUpdated.emit(response.user);
         },
         error: (error: HttpErrorResponse) => {
@@ -173,6 +180,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
 
   private clearImagePreview(): void {
     if (this.imagePreview) {
+      // Libera la URL temporal para no mantener recursos locales al cerrar o reemplazar la foto.
       URL.revokeObjectURL(this.imagePreview);
       this.imagePreview = '';
     }
