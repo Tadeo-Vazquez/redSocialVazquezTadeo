@@ -64,6 +64,27 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
+.edit-profile-button {
+  min-height: 38px;
+  margin-top: 18px;
+  border: 1px solid rgba(151, 110, 255, 0.45);
+  border-radius: 10px;
+  padding: 0 14px;
+  background: rgba(112, 70, 250, 0.16);
+  color: #fff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.edit-profile-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(235, 55, 160, 0.65);
+  background: rgba(235, 55, 160, 0.18);
+}
+
 .profile-avatar-placeholder {
   display: grid;
   place-items: center;

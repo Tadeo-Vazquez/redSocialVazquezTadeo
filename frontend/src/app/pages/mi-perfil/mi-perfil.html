@@ -30,6 +30,9 @@
         @if (currentUser.descripcionBreve) {
           <p class="profile-description">{{ currentUser.descripcionBreve }}</p>
         }
+        <button class="edit-profile-button" type="button" (click)="openEditProfile()">
+          Editar perfil
+        </button>
       </div>
     </article>
 
@@ -79,6 +82,13 @@
       }
     </section>
   </main>
+}
+@if (isEditProfileOpen && currentUser) {
+  <app-editar-perfil
+    [user]="currentUser"
+    (closed)="closeEditProfile()"
+    (profileUpdated)="onProfileUpdated($event)"
+  />
 }
 @if (selectedCommentsPost) {
   <app-comments-aside

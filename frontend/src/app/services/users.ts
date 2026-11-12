@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL } from '../config/api-url.generated';
+import { CurrentUser } from './current-user';
 
 export interface UserProfileResponse {
   message?: string;
-  user?: Record<string, unknown>;
+  user?: CurrentUser;
   [key: string]: unknown;
 }
 
@@ -13,7 +15,7 @@ export interface UserProfileResponse {
 })
 export class Users {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/users';
+  private readonly apiUrl = `${API_URL}/users`;
 
   getProfile(id: string): Observable<UserProfileResponse> {
     return this.http.get<UserProfileResponse>(`${this.apiUrl}/${id}`);

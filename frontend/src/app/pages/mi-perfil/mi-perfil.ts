@@ -7,9 +7,11 @@ import { PublicacionCard } from '../publicaciones/publicacion-card';
 import { Session } from '../../services/session';
 import { PostLikes } from '../../services/post-likes';
 import { CommentsAside } from '../../shared/comments-aside/comments-aside';
+import { EditarPerfil } from './editar-perfil/editar-perfil';
+import { CurrentUser } from '../../services/current-user';
 
 @Component({
-  imports: [FormatoFechaPipe, AsideNav, PublicacionCard, CommentsAside],
+  imports: [FormatoFechaPipe, AsideNav, PublicacionCard, CommentsAside, EditarPerfil],
   selector: 'app-mi-perfil',
   styleUrl: './mi-perfil.scss',
   templateUrl: './mi-perfil.html',
@@ -20,12 +22,13 @@ export class MiPerfil implements OnInit {
   private readonly session = inject(Session);
   private readonly postLikes = inject(PostLikes);
 
-  readonly currentUser = this.session.getCurrentUser();
+  currentUser = this.session.getCurrentUser();
   posts: Post[] = [];
   isLoadingPosts = false;
   postsError = '';
   likeError = '';
   selectedCommentsPost: Post | null = null;
+  isEditProfileOpen = false;
   readonly pendingPostIds = new Set<string>();
 
   ngOnInit(): void {
@@ -83,6 +86,20 @@ export class MiPerfil implements OnInit {
 
   closeComments(): void {
     this.selectedCommentsPost = null;
+  }
+
+  openEditProfile(): void {
+    this.isEditProfileOpen = true;
+  }
+
+  closeEditProfile(): void {
+    this.isEditProfileOpen = false;
+  }
+
+  onProfileUpdated(user: CurrentUser): void {
+    this.currentUser = user;
+    this.session.setCurrentUser(user);
+    this.isEditProfileOpen = false;
   }
 
   private loadPosts(): void {

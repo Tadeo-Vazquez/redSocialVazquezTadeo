@@ -1,0 +1,116 @@
+<div class="modal-backdrop" (click)="close()">
+  <section
+    class="edit-profile-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="edit-profile-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div>
+        <p class="eyebrow">Tu cuenta</p>
+        <h2 id="edit-profile-title">Editar perfil</h2>
+      </div>
+      <button
+        class="close-button"
+        type="button"
+        aria-label="Cerrar edición de perfil"
+        [disabled]="isSaving"
+        (click)="close()"
+      >×</button>
+    </header>
+
+    <form [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
+      <div class="avatar-field">
+        <div class="avatar-preview">
+          @if (imagePreview || user.avatarUrl) {
+            <img [src]="imagePreview || user.avatarUrl" alt="Vista previa de la foto de perfil" />
+          } @else {
+            <span aria-hidden="true">
+              {{ user.nombre?.charAt(0) || 'U' }}{{ user.apellido?.charAt(0) || '' }}
+            </span>
+          }
+        </div>
+        <div class="avatar-copy">
+          <label for="profile-image">Foto de perfil</label>
+          <input
+            id="profile-image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onImageSelected($event)"
+            [disabled]="isSaving"
+          />
+          <small>JPG, PNG o WEBP. Máximo 5 MB.</small>
+          @if (imageError) {
+            <span class="field-error" role="alert">{{ imageError }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="edit-nombre">Nombre</label>
+          <input id="edit-nombre" formControlName="nombre" maxlength="50" autocomplete="given-name" />
+          @if (profileForm.controls.nombre.touched && profileForm.controls.nombre.invalid) {
+            <span class="field-error">El nombre es obligatorio (máximo 50 caracteres).</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="edit-apellido">Apellido</label>
+          <input id="edit-apellido" formControlName="apellido" maxlength="50" autocomplete="family-name" />
+          @if (profileForm.controls.apellido.touched && profileForm.controls.apellido.invalid) {
+            <span class="field-error">El apellido es obligatorio (máximo 50 caracteres).</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="edit-fecha-nacimiento">Fecha de nacimiento</label>
+          <input
+            id="edit-fecha-nacimiento"
+            type="date"
+            formControlName="fechaNacimiento"
+            [max]="today"
+            autocomplete="bday"
+          />
+          @if (profileForm.controls.fechaNacimiento.touched && profileForm.controls.fechaNacimiento.invalid) {
+            <span class="field-error">La fecha de nacimiento es obligatoria.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="edit-descripcion">Descripción breve</label>
+          <textarea
+            id="edit-descripcion"
+            formControlName="descripcionBreve"
+            maxlength="280"
+            rows="4"
+          ></textarea>
+          <div class="field-footer">
+            @if (profileForm.controls.descripcionBreve.touched && profileForm.controls.descripcionBreve.invalid) {
+              <span class="field-error">La descripción es obligatoria (máximo 280 caracteres).</span>
+            }
+            <span class="character-count">{{ profileForm.controls.descripcionBreve.value.length }}/280</span>
+          </div>
+        </div>
+      </div>
+
+      @if (errorMessage) {
+        <div class="form-error" role="alert">{{ errorMessage }}</div>
+      }
+
+      <footer class="modal-actions">
+        <button class="cancel-button" type="button" [disabled]="isSaving" (click)="close()">
+          Cancelar
+        </button>
+        <button class="save-button" type="submit" [disabled]="isSaving">
+          @if (isSaving) {
+            Guardando...
+          } @else {
+            Guardar cambios
+          }
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>
