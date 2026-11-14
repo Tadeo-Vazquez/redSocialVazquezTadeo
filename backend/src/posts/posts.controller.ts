@@ -16,7 +16,6 @@ import { CreatePostDto } from './dtos/create-post.dto.js';
 import { PostsService } from './posts.service.js';
 import { SecureImageInterceptor } from '../utils/interceptors/secure-image.interceptor.js';
 import { ListPostsDto } from './dtos/list-posts.dto.js';
-import { DeletePostDto } from './dtos/delete-post.dto.js';
 import { UserActionDto } from './dtos/user-action.dto.js';
 
 @Controller('posts')
@@ -57,7 +56,7 @@ export class PostsController {
   async remove(
     @Param('id') id: string,
     @Query('usuarioId') usuarioIdQuery: string,
-    @Body() dto: Partial<DeletePostDto>,
+    @Body() dto: Partial<UserActionDto>,
   ) {
     const usuarioId = usuarioIdQuery ?? dto?.usuarioId;
     this.logger.log(

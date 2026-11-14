@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
@@ -11,10 +12,13 @@ import { Transform } from 'class-transformer';
 // Son opcionales para admitir actualizaciones parciales; la foto se recibe aparte
 // como archivo multipart en UsersController, no como propiedad de este DTO.
 export class UpdateProfileDto {
-  // El nombre puede omitirse y, si llega, debe ser texto no vacío.
+    // El nombre puede omitirse y, si llega, debe contener únicamente letras y espacios.
   @IsOptional()
   @IsString({ message: 'El nombre debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'El nombre no puede estar vacío.' })
+  // @Matches(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, {
+  //   message: 'El nombre solo puede contener letras y espacios.',
+  // })
   @MaxLength(50, { message: 'El nombre no puede superar los 50 caracteres.' })
   nombre?: string;
 
@@ -22,6 +26,9 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString({ message: 'El apellido debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'El apellido no puede estar vacío.' })
+  // @Matches(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, {
+  //   message: 'El nombre solo puede contener letras y espacios.',
+  // })
   @MaxLength(50, { message: 'El apellido no puede superar los 50 caracteres.' })
   apellido?: string;
 
