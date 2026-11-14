@@ -44,6 +44,10 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Authentication configuration
+
+Set `JWT_SECRET` in the backend environment to a long, random secret before starting the application. Login and registration issue a 15-minute JWT in an `HttpOnly`, `SameSite=Lax` cookie; the `Secure` flag is enabled in production. The token is not included in the JSON response.
+
 ## Run tests
 
 ```bash

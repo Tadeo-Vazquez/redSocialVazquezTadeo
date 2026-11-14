@@ -6,7 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { JwtService } from '@nestjs/jwt';
+import { isValidObjectId, Model } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { User, UserDocument } from '../users/users.schema.js';
 import { RegisterDto } from './dtos/register.dto.js';
@@ -23,6 +24,7 @@ export class AuthService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     // Servicio encargado de enviar las imágenes de perfil a Cloudinary.
     private readonly cloudinaryService: CloudinaryService,
+    private readonly jwtService: JwtService,
   ) {}
 
   // Crea una cuenta nueva luego de validar los datos y comprobar que no exista el usuario.
@@ -111,11 +113,10 @@ export class AuthService {
     this.logger.log(
       `Registro guardado en la base de datos: usuario creado con ID ${createdUser._id} y email ${createdUser.email}`,
     );
-    // Devuelve únicamente un mensaje y los datos públicos del usuario recién creado.
-    return {
-      message: 'Usuario registrado correctamente.',
-      user: this.toPublicUser(createdUser),
-    };
+    return this.createSessionResponse(
+      'Usuario registrado correctamente.',
+      createdUser,
+    );
   }
 
   // Verifica las credenciales e inicia conceptualmente la sesión del usuario.
@@ -156,10 +157,76 @@ export class AuthService {
     this.logger.log(
       `Login exitoso para ${user.email}: credenciales válidas y autenticación completada`,
     );
-    // Respuesta pública con los datos básicos del usuario autenticado.
+    return this.createSessionResponse('Inicio de sesión correcto.', user);
+  }
+
+  async authorize(accessToken?: string) {
+    const user = await this.getActiveUserFromToken(accessToken);
+
+    // Se devuelve el perfil actual y nunca el hash de contraseña ni el JWT.
     return {
-      message: 'Inicio de sesión correcto.',
+      message: 'Sesión autorizada.',
       user: this.toPublicUser(user),
+    };
+  }
+
+  async refresh(accessToken?: string) {
+    // No se renueva un token vencido: primero se verifica firma y `exp` igual
+    // que en /autorizar. Luego se emite otro JWT desde los datos actuales del usuario.
+    const user = await this.getActiveUserFromToken(accessToken);
+    return this.createSessionResponse('Sesión renovada correctamente.', user);
+  }
+
+  private async getActiveUserFromToken(accessToken?: string): Promise<UserDocument> {
+    // Sin cookie no existe una sesión que se pueda validar; se usa 401 para
+    // que el frontend sepa que debe pedir login en lugar de tratarlo como error 200.
+    if (!accessToken) {
+      throw new UnauthorizedException('No hay una sesión activa.');
+    }
+
+    let payload: { sub?: unknown };
+    try {
+      // verifyAsync comprueba la firma con JWT_SECRET y el vencimiento `exp`;
+      // también rechaza tokens alterados o firmados con otra clave.
+      payload = await this.jwtService.verifyAsync<{ sub?: unknown }>(accessToken);
+    } catch {
+      throw new UnauthorizedException('El token es inválido o expiró.');
+    }
+
+    // `sub` identifica al usuario. Validar su formato antes de consultar Mongo
+    // evita errores de casteo si el token contiene un identificador mal formado.
+    if (typeof payload.sub !== 'string' || !isValidObjectId(payload.sub)) {
+      throw new UnauthorizedException('El token no identifica un usuario válido.');
+    }
+
+    // El token podría seguir vigente aunque la cuenta haya sido deshabilitada
+    // después del login, por eso se confirma el estado actual en la base de datos.
+    const user = await this.userModel
+      .findOne({ _id: payload.sub, isDeleted: false })
+      .exec();
+    if (!user) {
+      throw new UnauthorizedException('La cuenta no existe o está deshabilitada.');
+    }
+
+    return user;
+  }
+
+  private async createSessionResponse(message: string, user: UserDocument) {
+    // Firma un token con la identidad y el rol ya guardados en la base de datos.
+    // `sub` (subject) es el identificador estable del usuario; `role` habilitará
+    // comprobaciones de permisos y `username` evita consultar el nombre en cada request.
+    const accessToken = await this.jwtService.signAsync({
+      sub: user._id.toString(),
+      username: user.username,
+      role: user.perfil,
+    });
+
+    return {
+      message,
+      user: this.toPublicUser(user),
+      // El controlador extrae este campo y lo coloca en una cookie HttpOnly;
+      // no debe formar parte del JSON que recibe el frontend.
+      accessToken,
     };
   }
 

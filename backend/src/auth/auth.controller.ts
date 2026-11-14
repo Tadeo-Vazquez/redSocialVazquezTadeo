@@ -5,12 +5,16 @@ import {
   HttpStatus,
   Logger,
   Post,
+  Req,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { RegisterDto } from './dtos/register.dto.js';
 import { LoginDto } from './dtos/login.dto.js';
 import { AuthService } from './auth.service.js';
+import { AUTH_TOKEN_TTL_MINUTES } from './auth.constants.js';
 import { SecureImageInterceptor } from '../utils/interceptors/secure-image.interceptor.js';
 
 @Controller('auth')
@@ -24,19 +28,85 @@ export class AuthController {
   async register(
     @Body() dto: RegisterDto,
     @UploadedFile() image?: Express.Multer.File,
+    @Res({ passthrough: true }) response?: Response,
   ) {
     this.logger.log(`POST /auth/register - Solicitud recibida para el email: ${dto.email}`);
-    const result = await this.authService.register(dto, image);
+    // El servicio entrega el token junto con los datos; se separa aquí para
+    // enviarlo en el encabezado Set-Cookie y dejarlo fuera del cuerpo JSON.
+    const { accessToken, ...result } = await this.authService.register(dto, image);
+    this.setAuthCookie(response, accessToken);
     this.logger.log(`POST /auth/register - Respuesta finalizada correctamente para el email: ${dto.email}`);
     return result;
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     this.logger.log(`POST /auth/login - Solicitud recibida para el usuario: ${dto.loginInput}`);
-    const result = await this.authService.login(dto);
+    // Login y registro usan la misma forma de emitir la sesión para que el
+    // navegador reciba la cookie con idénticas opciones de seguridad.
+    const { accessToken, ...result } = await this.authService.login(dto);
+    this.setAuthCookie(response, accessToken);
     this.logger.log(`POST /auth/login - Respuesta finalizada correctamente para el usuario: ${dto.loginInput}`);
     return result;
+  }
+
+  @Post('autorizar')
+  @HttpCode(HttpStatus.OK)
+  async authorize(@Req() request: Request) {
+    this.logger.log('POST /auth/autorizar - Validando la cookie de sesión.');
+
+    // La cookie es HttpOnly: el navegador la envía automáticamente, pero el
+    // frontend no puede leer su contenido. Validamos también el tipo por si el
+    // cliente envía una cookie mal formada o duplicada.
+    const cookieValue: unknown = request.cookies?.access_token;
+    const accessToken = typeof cookieValue === 'string' ? cookieValue : undefined;
+
+    // El servicio responde 401 si falta el token, no es válido/ya venció o si
+    // el usuario asociado fue eliminado o deshabilitado.
+    return this.authService.authorize(accessToken);
+  }
+
+  @Post('refrescar')
+  @HttpCode(HttpStatus.OK)
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    this.logger.log('POST /auth/refrescar - Renovando la cookie de sesión.');
+
+    // El navegador adjunta la cookie HttpOnly automáticamente. El token no se
+    // acepta desde el body para evitar mantener dos formas distintas de sesión.
+    const cookieValue: unknown = request.cookies?.access_token;
+    const accessToken = typeof cookieValue === 'string' ? cookieValue : undefined;
+
+    // refresh valida primero el token vigente y devuelve un JWT recién firmado.
+    // Se reemplaza la cookie solo si esa validación y la consulta del usuario pasan.
+    const { accessToken: renewedToken, ...result } =
+      await this.authService.refresh(accessToken);
+    this.setAuthCookie(response, renewedToken);
+
+    return result;
+  }
+
+  private setAuthCookie(response: Response | undefined, accessToken: string): void {
+    // HttpOnly impide que JavaScript lea el JWT; el navegador lo adjunta solo
+    // en las solicitudes que coincidan con el dominio y la ruta de esta cookie.
+    response?.cookie('access_token', accessToken, {
+      httpOnly: true,
+      // En producción obliga a transportar la cookie por HTTPS; en desarrollo
+      // local permite probar HTTP sin configurar certificados.
+      secure: process.env.NODE_ENV === 'production',
+      // Lax permite la navegación normal al sitio y reduce el envío desde
+      // solicitudes iniciadas por sitios externos.
+      sameSite: 'lax',
+      // Express recibe maxAge en milisegundos; la constante compartida está en minutos.
+      maxAge: AUTH_TOKEN_TTL_MINUTES * 60 * 1000,
+      // Hace que la cookie esté disponible para las rutas de autenticación y API.
+      path: '/',
+    });
   }
 }
