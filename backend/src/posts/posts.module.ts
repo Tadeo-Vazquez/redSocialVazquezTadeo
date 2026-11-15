@@ -4,6 +4,7 @@ import { PostsController } from './posts.controller.js';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Post, PostSchema } from './posts.schema.js';
 import { UsersModule } from '../users/users.module.js';
+import { ModuloComentarios } from './comentarios/comentarios.module.js';
 
 @Module({
   imports: [
@@ -11,6 +12,9 @@ import { UsersModule } from '../users/users.module.js';
     MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
     // Importa User para verificar autores, usuarios activos y roles administrador.
     UsersModule,
+    // Los comentarios forman parte de Publicaciones, pero tienen su propio
+    // controlador, servicio y esquema para mantener separadas las responsabilidades.
+    ModuloComentarios,
   ],
   providers: [PostsService],
   controllers: [PostsController],

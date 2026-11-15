@@ -19,7 +19,10 @@ export class UsersService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  // Obtiene un perfil activo por su identificador.
+  /**
+   * Busca un perfil por ObjectId y solo devuelve cuentas activas. La contraseña
+   * se excluye de la respuesta aunque el documento Mongoose la contenga.
+   */
   async findProfile(id: string) {
     // Rechaza identificadores que no tengan el formato de ObjectId de MongoDB.
     this.validateId(id);
@@ -37,7 +40,10 @@ export class UsersService {
     return this.toPublicUser(user);
   }
 
-  // Actualiza el nombre, apellido, fecha de nacimiento, descripción y/o foto.
+  /**
+   * Actualiza solo los campos enviados. La fecha se convierte a Date y la
+   * imagen, si existe, se sube antes de guardar su URL pública en MongoDB.
+   */
   async updateProfile(
     id: string,
     dto: UpdateProfileDto,
@@ -68,7 +74,8 @@ export class UsersService {
       update.avatarUrl = uploadedImage.secure_url;
     }
 
-    // $set conserva los campos omitidos; returnDocument: 'after' devuelve el perfil ya actualizado.
+    // $set modifica solo las propiedades presentes, por lo que las omitidas se
+    // conservan. runValidators vuelve a aplicar las reglas del esquema al update.
     const user = await this.userModel.findOneAndUpdate(
       { _id: id, isDeleted: false },
       { $set: update },
@@ -85,14 +92,16 @@ export class UsersService {
     };
   }
 
-  // Valida que el identificador recibido corresponda al formato ObjectId.
+  // Comprueba el formato antes de consultar MongoDB para responder con un 400
+  // predecible en vez de dejar que Mongoose genere un error de conversión.
   private validateId(id: string) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('El identificador del usuario no es válido.');
     }
   }
 
-  // Convierte el documento de Mongoose a objeto público sin password.
+  // Convierte el documento a un objeto normal y omite password para impedir
+  // que el hash se filtre en los perfiles que devuelve la API.
   private toPublicUser(user: UserDocument) {
     const result = user.toObject();
     const { password: _password, ...publicUser } = result;

@@ -27,7 +27,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  // Crea una cuenta nueva luego de validar los datos y comprobar que no exista el usuario.
+  /**
+   * Completa el alta de una cuenta: valida datos de negocio, prepara la imagen,
+   * guarda al usuario y finalmente genera la respuesta de sesión.
+   */
   async register(dto: RegisterDto, image?: Express.Multer.File) {
     // Los dos campos de contraseña deben coincidir antes de continuar.
     if (dto.password !== dto.repetirPassword) {
@@ -50,7 +53,8 @@ export class AuthService {
     this.logger.log(
       `Registro iniciado: buscando un usuario existente con email ${dto.email} o username ${dto.username}`,
     );
-    // Ejecuta ambas búsquedas al mismo tiempo para verificar que el email y el username estén disponibles.
+    // Ejecuta ambas búsquedas en paralelo porque son independientes; además de
+    // acelerar el alta, permite responder si cualquiera de los identificadores ya está ocupado.
     const [emailExists, usernameExists] = await Promise.all([
       this.userModel.exists({ email: dto.email, isDeleted: false }),
       this.userModel.exists({ username: dto.username, isDeleted: false }),
@@ -95,7 +99,8 @@ export class AuthService {
         isDeleted: false,
       });
     } catch (error) {
-      // MongoDB puede rechazar duplicados incluso si pasaron las búsquedas previas.
+      // La consulta previa mejora el mensaje, pero no evita una carrera entre
+      // dos registros simultáneos. Los índices únicos de MongoDB son la garantía final.
       if (this.isDuplicateKeyError(error)) {
         const duplicateField = this.getDuplicateField(error);
         this.logger.warn(
@@ -119,7 +124,10 @@ export class AuthService {
     );
   }
 
-  // Verifica las credenciales e inicia conceptualmente la sesión del usuario.
+  /**
+   * Autentica usando correo o nombre de usuario y contraseña. La respuesta
+   * contiene el perfil público y el JWT que el controlador coloca en una cookie.
+   */
   async login(dto: LoginDto) {
     this.logger.log(
       `Login: buscando usuario por email o username con el identificador ${dto.loginInput}`,
@@ -160,6 +168,10 @@ export class AuthService {
     return this.createSessionResponse('Inicio de sesión correcto.', user);
   }
 
+  /**
+   * Valida la sesión actual y entrega el perfil vigente del usuario, no una
+   * copia potencialmente desactualizada de los datos guardados en el JWT.
+   */
   async authorize(accessToken?: string) {
     const user = await this.getActiveUserFromToken(accessToken);
 
@@ -170,6 +182,10 @@ export class AuthService {
     };
   }
 
+  /**
+   * Renueva solo sesiones que todavía son válidas: primero verifica el JWT
+   * existente y luego firma otro con la información actual del usuario.
+   */
   async refresh(accessToken?: string) {
     // No se renueva un token vencido: primero se verifica firma y `exp` igual
     // que en /autorizar. Luego se emite otro JWT desde los datos actuales del usuario.
@@ -177,6 +193,10 @@ export class AuthService {
     return this.createSessionResponse('Sesión renovada correctamente.', user);
   }
 
+  /**
+   * Centraliza la verificación de una sesión para autorizar y refrescar:
+   * comprueba el JWT, valida su identificador y confirma que la cuenta siga activa.
+   */
   private async getActiveUserFromToken(accessToken?: string): Promise<UserDocument> {
     // Sin cookie no existe una sesión que se pueda validar; se usa 401 para
     // que el frontend sepa que debe pedir login en lugar de tratarlo como error 200.
@@ -211,6 +231,10 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * Construye la forma común de las respuestas de login, registro y refresh.
+   * El controlador separa accessToken del JSON y lo envía en una cookie HttpOnly.
+   */
   private async createSessionResponse(message: string, user: UserDocument) {
     // Firma un token con la identidad y el rol ya guardados en la base de datos.
     // `sub` (subject) es el identificador estable del usuario; `role` habilitará
@@ -218,7 +242,10 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync({
       sub: user._id.toString(),
       username: user.username,
+      // role conserva compatibilidad con consumidores existentes; rol es el
+      // nombre de claim requerido por el contrato del sprint.
       role: user.perfil,
+      rol: user.perfil,
     });
 
     return {
@@ -230,14 +257,18 @@ export class AuthService {
     };
   }
 
-  // Prepara una representación segura del usuario para no enviar su contraseña.
+  /**
+   * Convierte el documento Mongoose a un objeto simple y excluye la contraseña
+   * antes de exponer cualquier dato de usuario en una respuesta HTTP.
+   */
   private toPublicUser(user: UserDocument) {
     const result = user.toObject();
     const { password: _password, ...publicUser } = result;
     return publicUser;
   }
 
-  // Comprueba si el error recibido corresponde al código 11000 de MongoDB por clave duplicada.
+  // Los errores de MongoDB llegan como unknown; esta guarda verifica primero
+  // su forma y su código antes de leer campos propios de un duplicado.
   private isDuplicateKeyError(error: unknown): error is {
     code: number;
     keyPattern?: Record<string, number>;
@@ -251,7 +282,8 @@ export class AuthService {
     );
   }
 
-  // Identifica si el duplicado proviene del correo o del nombre de usuario.
+  // MongoDB incluye la clave duplicada en keyPattern o keyValue; se revisan
+  // ambas formas para conservar un mensaje útil sin exponer el error interno.
   private getDuplicateField(error: {
     keyPattern?: Record<string, number>;
     keyValue?: Record<string, unknown>;

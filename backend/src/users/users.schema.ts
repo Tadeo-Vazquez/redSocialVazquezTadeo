@@ -40,7 +40,14 @@ export class User {
   avatarUrl: string;
 
   // Rol de la cuenta: usuario normal o administrador.
-  @Prop({ required: true, enum: ['usuario', 'administrador'], default: 'usuario' })
+  // TypeScript expresa el dominio como unión, pero Mongoose necesita el tipo
+  // de almacenamiento explícito para construir el esquema en tiempo de ejecución.
+  @Prop({
+    type: String,
+    required: true,
+    enum: ['usuario', 'administrador'],
+    default: 'usuario',
+  })
   perfil: UserProfile;
 
   // Marca de baja lógica; true significa que el usuario fue deshabilitado.

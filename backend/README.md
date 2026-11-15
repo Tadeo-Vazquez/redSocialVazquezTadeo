@@ -48,6 +48,18 @@ $ npm run start:prod
 
 Set `JWT_SECRET` in the backend environment to a long, random secret before starting the application. Login and registration issue a 15-minute JWT in an `HttpOnly`, `SameSite=Lax` cookie; the `Secure` flag is enabled in production. The token is not included in the JSON response.
 
+`POST /auth/autorizar` validates the session cookie and returns the current user; `POST /auth/refrescar` renews it while it is still valid. The `/autorizar` and `/refrescar` paths are also available to match the sprint specification. JWT claims include the user identifier (`sub`), `username`, and `rol`.
+
+## API de comentarios
+
+Los comentarios forman parte de Publicaciones y usan rutas anidadas para identificar la publicación en cada acción:
+
+- `POST /posts/:postId/comments` crea un comentario. El cuerpo JSON contiene `usuarioId` y `texto`; una solicitud exitosa devuelve `201 Created`.
+- `GET /posts/:postId/comments?offset=0&limit=10` lista los comentarios del más reciente al más antiguo. La respuesta incluye la página solicitada y el total; el parámetro `limit` está limitado a 100.
+- `PUT /posts/:postId/comments/:commentId` edita un comentario. El cuerpo JSON contiene `usuarioId` y `texto`; solo el autor puede editarlo y, al hacerlo, `modificado` pasa a `true`.
+
+Las tres rutas rechazan identificadores no válidos y referencias a usuarios o publicaciones inexistentes o inactivos. No se pueden consultar ni modificar comentarios cuando su publicación fue eliminada lógicamente.
+
 ## Run tests
 
 ```bash

@@ -26,6 +26,11 @@ export class PostsService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  /**
+   * Crea una publicación vinculada a un usuario activo. La imagen se sube
+   * primero al proveedor externo y, si MongoDB falla, se elimina para no dejar
+   * un archivo que ya no tenga una publicación asociada.
+   */
   async create(dto: CreatePostDto, image?: Express.Multer.File) {
     // La publicación solo puede pertenecer a una cuenta activa existente.
     const user = await this.userModel.findOne({
@@ -75,6 +80,11 @@ export class PostsService {
     }
   }
 
+  /**
+   * Devuelve una página de publicaciones junto con el total que coincide con
+   * los filtros. La agregación hace el conteo y la consulta de página usando
+   * el mismo conjunto de publicaciones activas.
+   */
   async findAll(dto: ListPostsDto) {
     // offset indica desde qué publicación comenzar y limit cuántas traer.
     const offset = dto.offset ?? 0;
@@ -104,7 +114,8 @@ export class PostsService {
       {
         $facet: {
           posts: [
-            // Paginación, datos del usuario creador y limpieza de campos privados.
+            // $facet permite obtener la página y el total en una sola agregación:
+            // esta rama pagina, incorpora el perfil del autor y oculta datos privados.
             { $skip: offset },
             { $limit: limit },
             {
@@ -148,6 +159,10 @@ export class PostsService {
     };
   }
 
+  /**
+   * Registra un "me gusta" solo si la publicación y el usuario existen y aún
+   * no hay una acción de ese usuario en el arreglo de likes.
+   */
   async addLike(postId: string, usuarioId?: string) {
     // Valida primero IDs, porque los datos deben tener formato ObjectId.
     this.validateIds(postId, usuarioId, 'publicación');
@@ -186,6 +201,10 @@ export class PostsService {
     };
   }
 
+  /**
+   * Quita un "me gusta" existente. Se valida antes de filtrar el arreglo para
+   * distinguir entre eliminar una acción real y solicitar una que nunca existió.
+   */
   async removeLike(postId: string, usuarioId?: string) {
     this.validateIds(postId, usuarioId, 'publicación');
 
@@ -227,6 +246,11 @@ export class PostsService {
     };
   }
 
+  /**
+   * Aplica una baja lógica: conserva el documento y sus relaciones, pero deja
+   * de incluirlo en consultas que filtran isDeleted=false. Solo puede hacerlo
+   * el creador o un usuario administrador.
+   */
   async remove(id: string, usuarioId?: string) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('El identificador de la publicación no es válido.');
@@ -269,6 +293,11 @@ export class PostsService {
     };
   }
 
+  /**
+   * Comprueba los identificadores antes de usarlos en consultas Mongoose.
+   * Así los valores ausentes o mal formados generan un error HTTP claro y no
+   * un error de conversión de MongoDB.
+   */
   private validateIds(
     postId: string,
     usuarioId: string | undefined,
