@@ -15,6 +15,7 @@ export class PublicacionCard {
   @Input() showOwnerActions = true;
   @Input() deletePending = false;
   @Input() showCommentsAction = false;
+  @Input() showFullContent = false;
 
   @Output() likeRequested = new EventEmitter<Post>();
   @Output() deleteRequested = new EventEmitter<Post>();

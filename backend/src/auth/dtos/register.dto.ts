@@ -17,6 +17,7 @@ export class RegisterDto {
     message: 'El perfil debe ser usuario o administrador.',
   })
   perfil?: 'usuario' | 'administrador';
+  
   @IsString({ message: 'El nombre debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'El nombre es obligatorio.' })
   @MaxLength(50, { message: 'El nombre no puede superar los 50 caracteres.' })

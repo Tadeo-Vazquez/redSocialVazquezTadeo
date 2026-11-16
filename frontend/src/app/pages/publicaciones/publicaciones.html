@@ -1,20 +1,40 @@
 <app-aside-nav></app-aside-nav>
 
-<main class="private-page" #feedPage>
-  <section class="feed-container" aria-labelledby="feed-title">
+<main class="private-page">
+  <section #feedTop class="feed-container" aria-labelledby="feed-title">
     <header class="feed-header">
       <div>
         <p class="eyebrow">Comunidad</p>
         <h1 id="feed-title">Publicaciones</h1>
       </div>
 
-      <label class="sort-control">
+      <div class="sort-control">
         <span>Ordenar por</span>
-        <select [value]="ordenar" (change)="onSortChange($event)">
-          <option value="fecha">Más recientes</option>
-          <option value="likes">Más me gusta</option>
-        </select>
-      </label>
+        <div class="sort-buttons" role="group" aria-label="Ordenar publicaciones">
+          <button
+            class="sort-button"
+            [class.selected]="ordenar === 'fecha'"
+            type="button"
+            aria-label="Más recientes"
+            title="Más recientes"
+            [attr.aria-pressed]="ordenar === 'fecha'"
+            (click)="onSortChange('fecha')"
+          >
+            <img src="/reciente.png" alt="" aria-hidden="true" />
+          </button>
+          <button
+            class="sort-button"
+            [class.selected]="ordenar === 'likes'"
+            type="button"
+            aria-label="Más me gusta"
+            title="Más me gusta"
+            [attr.aria-pressed]="ordenar === 'likes'"
+            (click)="onSortChange('likes')"
+          >
+            <img src="/masmegusta.png" alt="" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
     </header>
 
     @if (actionError) {
@@ -41,7 +61,21 @@
         <p>Cuando haya publicaciones, aparecerán aquí.</p>
       </div>
     } @else {
-      <div class="posts-grid" #postsGrid>
+      @if (canGoToPreviousPage) {
+        <button
+          class="feed-page-button previous-page-button"
+          type="button"
+          aria-label="Volver a la página anterior"
+          title="Volver a la página anterior"
+          (click)="goToPreviousPage()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 15 6-6 6 6" />
+          </svg>
+        </button>
+      }
+
+      <div class="posts-grid">
         @for (post of posts; track trackPost($index, post)) {
           <app-publicacion-card
             [post]="post"
@@ -54,25 +88,20 @@
         }
       </div>
 
-      <nav #pagination class="pagination" aria-label="Paginación de publicaciones">
+      @if (canGoToNextPage) {
         <button
-          class="secondary-button"
+          class="feed-page-button load-more-button"
           type="button"
-          [disabled]="!canGoToPreviousPage"
-          (click)="goToPreviousPage()"
-        >
-          Anterior
-        </button>
-        <span>Página {{ currentPage }} de {{ totalPages }}</span>
-        <button
-          class="secondary-button"
-          type="button"
-          [disabled]="!canGoToNextPage"
+          aria-label="Cargar más publicaciones"
           (click)="goToNextPage()"
         >
-          Siguiente
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
         </button>
-      </nav>
+      } @else {
+        <p class="end-of-feed" role="status">Has visto todas las publicaciones</p>
+      }
     }
   </section>
 </main>

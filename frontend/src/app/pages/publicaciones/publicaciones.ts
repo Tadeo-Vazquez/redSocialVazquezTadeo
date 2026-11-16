@@ -1,14 +1,10 @@
 import {
-  afterNextRender,
   ChangeDetectorRef,
   Component,
   ElementRef,
-  HostListener,
-  Injector,
   OnInit,
   ViewChild,
   inject,
-  runInInjectionContext,
 } from '@angular/core';
 import { finalize, timeout } from 'rxjs';
 import { Post, Posts } from '../../services/posts';
@@ -26,12 +22,13 @@ import { PublicacionCard } from './publicacion-card';
 export class Publicaciones implements OnInit {
   private readonly postsService = inject(Posts);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
-  private readonly injector = inject(Injector);
   private readonly session = inject(Session);
   private readonly postLikes = inject(PostLikes);
 
+  @ViewChild('feedTop') private feedTop?: ElementRef<HTMLElement>;
+
   readonly currentUser = this.session.getCurrentUser();
-  pageSize = 3;
+  readonly pageSize = 4;
   posts: Post[] = [];
   offset = 0;
   total = 0;
@@ -42,22 +39,9 @@ export class Publicaciones implements OnInit {
   readonly pendingPostIds = new Set<string>();
   readonly deletingPostIds = new Set<string>();
   private loadRequestId = 0;
-  private layoutMeasurementScheduled = false;
-
-  @ViewChild('postsGrid') private postsGrid?: ElementRef<HTMLElement>;
-  @ViewChild('pagination') private pagination?: ElementRef<HTMLElement>;
-  @ViewChild('feedPage') private feedPage?: ElementRef<HTMLElement>;
 
   get currentUserId(): string {
     return this.currentUser?._id ?? this.currentUser?.id ?? '';
-  }
-
-  get currentPage(): number {
-    return Math.floor(this.offset / this.pageSize) + 1;
-  }
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.total / this.pageSize));
   }
 
   get canGoToPreviousPage(): boolean {
@@ -69,18 +53,11 @@ export class Publicaciones implements OnInit {
   }
 
   ngOnInit(): void {
-    this.pageSize = this.getColumnCount();
     this.loadPosts();
   }
 
-  @HostListener('window:resize')
-  onViewportResize(): void {
-    this.updatePageSizeFromLayout();
-  }
-
-  onSortChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    if (value !== 'fecha' && value !== 'likes') {
+  onSortChange(value: 'fecha' | 'likes'): void {
+    if (value === this.ordenar) {
       return;
     }
 
@@ -95,6 +72,7 @@ export class Publicaciones implements OnInit {
     }
 
     this.offset = Math.max(0, this.offset - this.pageSize);
+    this.scrollToFeedTop();
     this.loadPosts();
   }
 
@@ -104,6 +82,7 @@ export class Publicaciones implements OnInit {
     }
 
     this.offset += this.pageSize;
+    this.scrollToFeedTop();
     this.loadPosts();
   }
 
@@ -177,6 +156,13 @@ export class Publicaciones implements OnInit {
     return post._id;
   }
 
+  private scrollToFeedTop(): void {
+    this.feedTop?.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }
+
   private loadPosts(): void {
     const requestId = ++this.loadRequestId;
     this.isLoading = true;
@@ -186,22 +172,31 @@ export class Publicaciones implements OnInit {
     this.postsService
       .getPosts(this.ordenar, this.offset, this.pageSize)
       .pipe(
-        timeout(10000),
-        finalize(() => {
-          if (requestId === this.loadRequestId) {
-            this.isLoading = false;
-            this.changeDetectorRef.markForCheck();
-          }
-        }),
+        timeout({ first: 10000 }),
+        finalize(() => this.finishLoading(requestId)),
       )
       .subscribe({
         next: (response) => {
           if (requestId !== this.loadRequestId) {
             return;
           }
+
+          // Aunque la solicitud haya sido exitosa, el servidor puede devolver
+          // datos inválidos. En ese caso, se muestra un error explícito.
+          if (
+            !response ||
+            !Array.isArray(response.posts) ||
+            !Number.isFinite(response.total)
+          ) {
+            this.posts = [];
+            this.loadError = 'El servidor devolvió una respuesta inválida.';
+            this.finishLoading(requestId);
+            return;
+          }
+
           this.posts = response.posts;
           this.total = response.total;
-          this.scheduleLayoutMeasurement();
+          this.finishLoading(requestId);
         },
         error: () => {
           if (requestId !== this.loadRequestId) {
@@ -209,68 +204,17 @@ export class Publicaciones implements OnInit {
           }
           this.posts = [];
           this.loadError = 'No se pudieron cargar las publicaciones.';
+          this.finishLoading(requestId);
         },
       });
   }
 
-  private getColumnCount(): number {
-    if (window.innerWidth <= 520) {
-      return 1;
-    }
-    return window.innerWidth <= 760 ? 2 : 3;
-  }
-
-  private scheduleLayoutMeasurement(): void {
-    if (this.layoutMeasurementScheduled) {
+  private finishLoading(requestId: number): void {
+    if (requestId !== this.loadRequestId) {
       return;
     }
 
-    this.layoutMeasurementScheduled = true;
-    runInInjectionContext(this.injector, () => {
-      afterNextRender(() => {
-        this.layoutMeasurementScheduled = false;
-        this.updatePageSizeFromLayout();
-      });
-    });
-  }
-
-  private updatePageSizeFromLayout(): void {
-    const grid = this.postsGrid?.nativeElement;
-    const firstCard = grid?.firstElementChild;
-    const pagination = this.pagination?.nativeElement;
-    const feedPage = this.feedPage?.nativeElement;
-    if (!(grid && firstCard instanceof HTMLElement && pagination && feedPage)) {
-      return;
-    }
-
-    const gridStyles = window.getComputedStyle(grid);
-    const columnGap = Number.parseFloat(gridStyles.columnGap) || 0;
-    const rowGap = Number.parseFloat(gridStyles.rowGap) || 0;
-    const gridWidth = grid.getBoundingClientRect().width;
-    const cardWidth = firstCard.getBoundingClientRect().width;
-    const cardHeight = firstCard.getBoundingClientRect().height;
-    if (cardWidth <= 0 || cardHeight <= 0) {
-      return;
-    }
-    const columns = Math.max(1, Math.floor((gridWidth + columnGap) / (cardWidth + columnGap)));
-
-    const pageStyles = window.getComputedStyle(feedPage);
-    const paginationStyles = window.getComputedStyle(pagination);
-    const bottomPadding = Number.parseFloat(pageStyles.paddingBottom) || 0;
-    const paginationMargin = Number.parseFloat(paginationStyles.marginTop) || 0;
-    const reservedPagination = pagination.getBoundingClientRect().height + paginationMargin;
-    const availableHeight =
-      window.innerHeight - grid.getBoundingClientRect().top - bottomPadding - reservedPagination;
-    const rows = Math.max(1, Math.floor((availableHeight + rowGap) / (cardHeight + rowGap)));
-    const nextPageSize = Math.min(100, columns * rows);
-
-    if (nextPageSize === this.pageSize) {
-      return;
-    }
-
-    const currentPageIndex = Math.floor(this.offset / this.pageSize);
-    this.pageSize = nextPageSize;
-    this.offset = currentPageIndex * this.pageSize;
-    this.loadPosts();
+    this.isLoading = false;
+    this.changeDetectorRef.markForCheck();
   }
 }
