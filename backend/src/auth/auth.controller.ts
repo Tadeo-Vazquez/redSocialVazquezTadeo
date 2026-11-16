@@ -5,17 +5,17 @@ import {
   HttpStatus,
   Logger,
   Post,
-  Req,
   Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { RegisterDto } from './dtos/register.dto.js';
 import { LoginDto } from './dtos/login.dto.js';
 import { AuthService } from './auth.service.js';
 import { AUTH_TOKEN_TTL_MINUTES } from './auth.constants.js';
 import { SecureImageInterceptor } from '../utils/interceptors/secure-image.interceptor.js';
+import { AccessToken } from './decorators/access-token.decorator.js';
 
 @Controller('auth')
 export class AuthController {
@@ -56,14 +56,8 @@ export class AuthController {
 
   @Post('autorizar')
   @HttpCode(HttpStatus.OK)
-  async authorize(@Req() request: Request) {
+  async authorize(@AccessToken() accessToken: string | undefined) {
     this.logger.log('POST /auth/autorizar - Validando la cookie de sesión.');
-
-    // La cookie es HttpOnly: el navegador la envía automáticamente, pero el
-    // frontend no puede leer su contenido. Validamos también el tipo por si el
-    // cliente envía una cookie mal formada o duplicada.
-    const cookieValue: unknown = request.cookies?.access_token;
-    const accessToken = typeof cookieValue === 'string' ? cookieValue : undefined;
 
     // El servicio responde 401 si falta el token, no es válido/ya venció o si
     // el usuario asociado fue eliminado o deshabilitado.
@@ -73,15 +67,10 @@ export class AuthController {
   @Post('refrescar')
   @HttpCode(HttpStatus.OK)
   async refresh(
-    @Req() request: Request,
+    @AccessToken() accessToken: string | undefined,
     @Res({ passthrough: true }) response: Response,
   ) {
     this.logger.log('POST /auth/refrescar - Renovando la cookie de sesión.');
-
-    // El navegador adjunta la cookie HttpOnly automáticamente. El token no se
-    // acepta desde el body para evitar mantener dos formas distintas de sesión.
-    const cookieValue: unknown = request.cookies?.access_token;
-    const accessToken = typeof cookieValue === 'string' ? cookieValue : undefined;
 
     // refresh valida primero el token vigente y devuelve un JWT recién firmado.
     // Se reemplaza la cookie solo si esa validación y la consulta del usuario pasan.
