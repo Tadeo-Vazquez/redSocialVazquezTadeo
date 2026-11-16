@@ -55,6 +55,19 @@ export class Posts {
     return this.http.get<PostsListResponse>(this.apiUrl, { params });
   }
 
+  /**
+   * Obtiene una publicación puntual para completar la pantalla de detalle.
+   * Se consulta `/posts/:id` directamente en lugar de descargar una página
+   * completa y buscar el ID en el cliente; el backend agrega el autor y el
+   * conteo de "me gusta" para que la tarjeta pueda renderizar todos sus datos.
+   *
+   * El Observable deja que el componente se suscriba y controle allí el estado
+   * de carga, los errores de red y la posibilidad de volver a intentar.
+   */
+  getPostById(postId: string): Observable<Post> {
+    return this.http.get<Post>(`${this.apiUrl}/${postId}`);
+  }
+
   getPosts(
     ordenar: 'fecha' | 'likes',
     offset: number,

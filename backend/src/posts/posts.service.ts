@@ -160,6 +160,52 @@ export class PostsService {
   }
 
   /**
+   * Busca una publicación activa por ID y prepara los mismos datos derivados
+   * que entrega el feed: autor visible y total de "me gusta". La agregación
+   * mantiene coherente el formato que espera la tarjeta reutilizada en detalle.
+   */
+  async findOne(id: Types.ObjectId) {
+    // La coincidencia por ID y isDeleted excluye recursos inexistentes o dados de baja.
+    const [post] = await this.postModel
+      .aggregate([
+        { $match: { _id: id, isDeleted: false } },
+        {
+          $addFields: {
+            // likesCount permite que la interfaz no tenga que contar un arreglo en cada render.
+            likesCount: { $size: { $ifNull: ['$likes', []] } },
+          },
+        },
+        {
+          $lookup: {
+            // Resuelve la referencia del autor para mostrar nombre, usuario y avatar.
+            from: 'users',
+            localField: 'usuarioId',
+            foreignField: '_id',
+            as: 'usuario',
+          },
+        },
+        {
+          $set: {
+            usuario: { $arrayElemAt: ['$usuario', 0] },
+          },
+        },
+        {
+          $project: {
+            // La respuesta pública solo necesita datos de perfil; nunca se expone el hash de clave.
+            'usuario.password': 0,
+            'usuario.isDeleted': 0,
+          },
+        },
+      ])
+      .exec();
+
+    if (!post) {
+      throw new NotFoundException('Publicación no encontrada.');
+    }
+    return post;
+  }
+
+  /**
    * Registra un "me gusta" solo si la publicación y el usuario existen y aún
    * no hay una acción de ese usuario en el arreglo de likes.
    */

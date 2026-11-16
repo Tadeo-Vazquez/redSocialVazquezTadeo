@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.image-dialog-content {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgb(10, 9, 17);
+}
+
+.image-dialog-content img {
+  display: block;
+  max-width: 92vw;
+  max-height: 90dvh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.image-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 50%;
+  background: rgba(15, 14, 26, 0.78);
+  color: #fff;
+  cursor: pointer;
+}
+
+.image-dialog-close span {
+  font-size: 30px;
+  line-height: 1;
+}

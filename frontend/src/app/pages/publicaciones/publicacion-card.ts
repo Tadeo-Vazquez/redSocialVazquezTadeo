@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormatoFechaPipe } from '../../pipes/formato-fecha.pipe';
 import { Post } from '../../services/posts';
 
 @Component({
-  imports: [FormatoFechaPipe],
+  imports: [FormatoFechaPipe, RouterLink],
   selector: 'app-publicacion-card',
   styleUrl: './publicacion-card.scss',
   templateUrl: './publicacion-card.html',

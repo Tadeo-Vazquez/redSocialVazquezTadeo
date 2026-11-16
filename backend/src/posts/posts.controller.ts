@@ -52,6 +52,12 @@ export class PostsController {
     return this.postsService.findAll(dto);
   }
 
+  // Valida el ID de la ruta y delega al servicio la búsqueda de un único recurso activo.
+  @Get(':id')
+  findOne(@Param('id', ParseMongoIdPipe) id: Types.ObjectId) {
+    return this.postsService.findOne(id);
+  }
+
   // DELETE /posts/:id: inicia baja lógica; el servicio verifica permisos.
   @Delete(':id')
   @HttpCode(HttpStatus.OK)

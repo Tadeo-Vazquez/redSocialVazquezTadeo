@@ -1,4 +1,10 @@
 <article class="post-card" [class.full-content]="showFullContent">
+  <a
+    class="post-detail-link"
+    [routerLink]="['/publicacion-detalle', post._id]"
+    [attr.aria-label]="'Abrir el detalle de ' + post.titulo"
+  ></a>
+
   <header class="post-author">
     @if (post.usuario?.avatarUrl) {
       <img [src]="post.usuario?.avatarUrl" [alt]="'Foto de ' + authorName" />

@@ -1,0 +1,11 @@
+<div class="image-dialog-content">
+  <button
+    class="image-dialog-close"
+    type="button"
+    aria-label="Cerrar imagen ampliada"
+    (click)="close()"
+  >
+    <span aria-hidden="true">×</span>
+  </button>
+  <img [src]="data.imageUrl" [alt]="data.imageAlt" />
+</div>

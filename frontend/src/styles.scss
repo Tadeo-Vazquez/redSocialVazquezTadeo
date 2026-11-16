@@ -1,5 +1,18 @@
+@import '@angular/material/prebuilt-themes/rose-red.css';
+
 * {
   box-sizing: border-box;
+}
+
+.publication-image-dialog-panel .mat-mdc-dialog-surface {
+  overflow: hidden;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.publication-image-dialog-backdrop {
+  background: rgba(5, 4, 12, 0.88);
 }
 
 html,

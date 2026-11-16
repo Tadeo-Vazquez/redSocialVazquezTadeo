@@ -1,29 +1,139 @@
-<div class="comments-overlay">
-  <button
-    class="comments-backdrop"
-    type="button"
-    aria-label="Cerrar comentarios"
-    (click)="close()"
-  ></button>
+<div class="comments-overlay" [class.embedded-overlay]="embedded">
+  <!-- El fondo y el botón de cerrar solo existen en el uso superpuesto del perfil. -->
+  @if (!embedded) {
+    <button
+      class="comments-backdrop"
+      type="button"
+      aria-label="Cerrar comentarios"
+      (click)="close()"
+    ></button>
+  }
 
-  <aside class="comments-panel" role="dialog" aria-modal="true" aria-labelledby="comments-title">
+  <aside
+    class="comments-panel"
+    [class.embedded-panel]="embedded"
+    [attr.role]="embedded ? null : 'dialog'"
+    [attr.aria-modal]="embedded ? null : 'true'"
+    aria-label="Comentarios de la publicación"
+  >
     <header class="comments-header">
       <div>
-        <p class="eyebrow">Comentarios</p>
-        <h2 id="comments-title">{{ post.titulo }}</h2>
+        <p class="eyebrow">{{ total }} comentarios</p>
       </div>
-      <button class="close-button" type="button" aria-label="Cerrar comentarios" (click)="close()">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m6 6 12 12M18 6 6 18" />
-        </svg>
-      </button>
+      @if (!embedded) {
+        <button class="close-button" type="button" aria-label="Cerrar comentarios" (click)="close()">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+      }
     </header>
 
-    <div class="comments-empty" aria-live="polite">
-      <span class="comments-icon" aria-hidden="true">
-        <img src="/comentario-icon.png" alt="" aria-hidden="true" />
-      </span>
-      <h3>Los comentarios aparecerán aquí</h3>
+    @if (actionError) {
+      <p class="comments-error" role="alert">{{ actionError }}</p>
+    }
+
+    <!-- El panel separa estados de carga/error/vacío de la lista paginada. -->
+    <div class="comments-list" aria-live="polite">
+      @if (isLoading && comments.length === 0) {
+        <div class="comments-state">
+          <span class="spinner" aria-hidden="true"></span>
+          <p>Cargando comentarios...</p>
+        </div>
+      } @else if (loadError && comments.length === 0) {
+        <div class="comments-state comments-error" role="alert">
+          <p>{{ loadError }}</p>
+          <button class="secondary-button" type="button" (click)="retryLoad()">Reintentar</button>
+        </div>
+      } @else if (comments.length === 0) {
+        <div class="comments-empty">
+          <span class="comments-icon" aria-hidden="true">
+            <img src="/comentario-icon.png" alt="" aria-hidden="true" />
+          </span>
+          <h3>Aún no hay comentarios</h3>
+          <p>¡Sé la primera persona en comentar!</p>
+        </div>
+      } @else {
+        <!-- El backend ordena por fecha descendente; cada respuesta conserva ese orden. -->
+        <ol class="comment-items">
+          @for (comment of comments; track trackComment($index, comment)) {
+            <li class="comment-item">
+              @if (authorAvatar(comment)) {
+                <img class="comment-avatar" [src]="authorAvatar(comment)" [alt]="'Foto de ' + authorName(comment)" />
+              } @else {
+                <span class="comment-avatar avatar-placeholder" aria-hidden="true">
+                  {{ authorName(comment).charAt(0).toUpperCase() }}
+                </span>
+              }
+              <div class="comment-body">
+                <div class="comment-heading">
+                  <strong>{{ authorName(comment) }}</strong>
+                  @if (comment.createdAt) {
+                    <time>{{ comment.createdAt | formatoFecha }}</time>
+                  }
+                </div>
+                @if (editingCommentId === comment._id) {
+                  <textarea
+                    class="comment-input edit-input"
+                    rows="3"
+                    maxlength="1000"
+                    aria-label="Editar comentario"
+                    [value]="editingText"
+                    (input)="onEditInput($event)"
+                  ></textarea>
+                  <div class="comment-actions">
+                    <button class="save-button" type="button" [disabled]="isSaving" (click)="saveEdit(comment)">
+                      Guardar
+                    </button>
+                    <button class="text-button" type="button" [disabled]="isSaving" (click)="cancelEdit()">
+                      Cancelar
+                    </button>
+                  </div>
+                } @else {
+                  <p class="comment-text">{{ comment.texto }}</p>
+                  <!-- modificado lo persiste el backend al guardar una edición. -->
+                  @if (comment.modificado) {
+                    <span class="edited-label">Editado</span>
+                  }
+                  @if (commentAuthorId(comment) === currentUserId) {
+                    <button class="text-button edit-button" type="button" (click)="beginEdit(comment)">
+                      Editar
+                    </button>
+                  }
+                }
+              </div>
+            </li>
+          }
+        </ol>
+        @if (loadError) {
+          <p class="comments-error" role="alert">{{ loadError }}</p>
+        }
+        @if (canLoadMore) {
+          <button class="load-more-button" type="button" [disabled]="isLoading" (click)="loadMore()">
+            {{ isLoading ? 'Cargando...' : 'Cargar más' }}
+          </button>
+        }
+      }
     </div>
+
+    <!-- Formulario compartido por el panel flotante y por la página de detalle. -->
+    <form class="comment-form" (submit)="submitComment($event)">
+      <label class="sr-only" for="new-comment">Escribe un comentario</label>
+      <textarea
+        id="new-comment"
+        class="comment-input"
+        rows="2"
+        maxlength="1000"
+        placeholder="Escribe un comentario..."
+        [value]="draft"
+        (input)="onDraftInput($event)"
+      ></textarea>
+      <div class="comment-form-footer">
+        <span>{{ draft.length }}/1000</span>
+        <button class="save-button" type="submit" [disabled]="isSaving || !draft.trim()">
+          {{ isSaving ? 'Enviando...' : 'Comentar' }}
+        </button>
+      </div>
+    </form>
   </aside>
 </div>

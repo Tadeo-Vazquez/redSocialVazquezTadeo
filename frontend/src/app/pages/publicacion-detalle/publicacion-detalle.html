@@ -1,0 +1,91 @@
+<app-aside-nav></app-aside-nav>
+
+<main class="detail-page">
+  <section class="detail-container" aria-labelledby="detail-title">
+    <!-- El enlace permite volver al feed sin depender de que el navegador conserve historial. -->
+    <a class="back-link" routerLink="/publicaciones">
+      <span aria-hidden="true">←</span>
+      Volver a publicaciones
+    </a>
+    <header class="detail-heading">
+      <p class="eyebrow">Comunidad</p>
+      <h1 id="detail-title">Detalle de publicación</h1>
+    </header>
+
+    <!-- La vista representa explícitamente cada etapa de la petición a /posts/:id. -->
+    @if (isLoading) {
+      <div class="detail-state" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Cargando publicación...</p>
+      </div>
+    } @else if (loadError) {
+      <div class="detail-state detail-error" role="alert">
+        <h2>No se pudo abrir la publicación</h2>
+        <p>{{ loadError }}</p>
+        <button class="retry-button" type="button" (click)="retryLoad()">Reintentar</button>
+      </div>
+    } @else if (post) {
+      <!-- La foto ocupa la columna izquierda y los datos y comentarios la columna derecha. -->
+      <div class="detail-layout">
+        <section class="detail-image-column" aria-label="Imagen de la publicación">
+          @if (post.imagenUrl) {
+            <button
+              class="detail-image-button"
+              type="button"
+              [attr.aria-label]="'Ampliar imagen de ' + post.titulo"
+              (click)="openImageDialog()"
+            >
+              <img class="detail-image" [src]="post.imagenUrl" [alt]="post.titulo" />
+            </button>
+          } @else {
+            <div class="detail-image-placeholder" aria-label="Publicación sin imagen">
+              <img src="/imagen.png" alt="" aria-hidden="true" />
+              <span>Esta publicación no tiene imagen</span>
+            </div>
+          }
+        </section>
+
+        <section class="detail-info-column" aria-label="Información y comentarios de la publicación">
+          <header class="detail-author">
+            @if (post.usuario?.avatarUrl) {
+              <img class="detail-avatar" [src]="post.usuario.avatarUrl" [alt]="'Foto de ' + authorName" />
+            } @else {
+              <span class="detail-avatar avatar-placeholder" aria-hidden="true">{{ authorInitial }}</span>
+            }
+            <div class="author-details">
+              <strong>{{ authorName }}</strong>
+              @if (post.createdAt) {
+                <time>{{ post.createdAt | formatoFecha }}</time>
+              }
+            </div>
+          </header>
+
+          <div class="detail-copy">
+            <h2>{{ post.titulo }}</h2>
+            <p>{{ post.descripcion }}</p>
+          </div>
+
+          <div class="detail-likes">
+            <button
+              class="like-toggle"
+              type="button"
+              [disabled]="isLikePending"
+              [attr.aria-label]="(hasLiked ? 'Quitar me gusta' : 'Me gusta') + '. ' + likesCount + ' me gusta'"
+              [attr.title]="hasLiked ? 'Quitar me gusta' : 'Me gusta'"
+              (click)="toggleLike()"
+            >
+              <img [src]="hasLiked ? '/like.png' : '/unlike.png'" alt="" aria-hidden="true" />
+            </button>
+            <strong>{{ likesCount }} Me gusta</strong>
+          </div>
+
+          @if (actionError) {
+            <p class="action-error" role="alert">{{ actionError }}</p>
+          }
+          <!-- El aside crece hasta el espacio restante y mantiene su lista desplazable. -->
+          <app-comments-aside [post]="post" [embedded]="true" />
+        </section>
+      </div>
+    }
+  </section>
+</main>
