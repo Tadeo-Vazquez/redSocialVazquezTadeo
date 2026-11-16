@@ -10,6 +10,8 @@ import {
 import { UpdateProfileDto } from './dtos/update-profile.dto.js';
 import { UsersService } from './users.service.js';
 import { SecureImageInterceptor } from '../utils/interceptors/secure-image.interceptor.js';
+import { ParseMongoIdPipe } from '../utils/pipes/parse-mongo-id.pipe.js';
+import type { Types } from 'mongoose';
 
 // Expone las rutas HTTP relacionadas con los usuarios.
 @Controller('users')
@@ -20,7 +22,7 @@ export class UsersController {
   // GET /users/:id
   // Busca y devuelve el perfil público de un usuario mediante su ObjectId.
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseMongoIdPipe) id: Types.ObjectId) {
     return this.usersService.findProfile(id);
   }
 
@@ -32,7 +34,7 @@ export class UsersController {
   @UseInterceptors(SecureImageInterceptor('image'))
   update(
     // Parametro de la URL que identifica al usuario que se va a modificar.
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: Types.ObjectId,
     // Datos validados del perfil mediante UpdateProfileDto.
     @Body() dto: UpdateProfileDto,
     // Archivo opcional normalizado por el interceptor antes de llegar al controlador.

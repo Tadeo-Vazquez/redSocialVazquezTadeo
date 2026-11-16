@@ -44,16 +44,6 @@
 
   <div class="post-content">
     <div class="post-meta">
-      @if (showCommentsAction) {
-        <button
-          class="comments-action"
-          type="button"
-          [attr.aria-label]="'Ver comentarios de ' + post.titulo"
-          (click)="commentsRequested.emit(post)"
-        >
-          <img src="/comentario-icon.png" alt="" aria-hidden="true" />
-        </button>
-      }
       @if (currentUserId) {
         <button
           class="like-toggle"
@@ -64,6 +54,16 @@
           (click)="likeRequested.emit(post)"
         >
           <img [src]="hasLiked ? '/like.png' : '/unlike.png'" alt="" aria-hidden="true" />
+        </button>
+      }
+      @if (showCommentsAction) {
+        <button
+          class="comments-action"
+          type="button"
+          [attr.aria-label]="'Ver comentarios de ' + post.titulo"
+          (click)="commentsRequested.emit(post)"
+        >
+          <img src="/comentario-icon.png" alt="" aria-hidden="true" />
         </button>
       }
     </div>

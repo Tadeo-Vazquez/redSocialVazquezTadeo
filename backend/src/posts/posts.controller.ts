@@ -17,6 +17,8 @@ import { PostsService } from './posts.service.js';
 import { SecureImageInterceptor } from '../utils/interceptors/secure-image.interceptor.js';
 import { ListPostsDto } from './dtos/list-posts.dto.js';
 import { UserActionDto } from './dtos/user-action.dto.js';
+import { ParseMongoIdPipe } from '../utils/pipes/parse-mongo-id.pipe.js';
+import type { Types } from 'mongoose';
 
 @Controller('posts')
 export class PostsController {
@@ -54,16 +56,16 @@ export class PostsController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   async remove(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: Types.ObjectId,
     @Query('usuarioId') usuarioIdQuery: string,
     @Body() dto: Partial<UserActionDto>,
   ) {
     const usuarioId = usuarioIdQuery ?? dto?.usuarioId;
     this.logger.log(
-      `DELETE /posts/${id} - Solicitud del usuario ${usuarioId ?? 'desconocido'}`,
+      `DELETE /posts/${id.toString()} - Solicitud del usuario ${usuarioId ?? 'desconocido'}`,
     );
     const result = await this.postsService.remove(id, usuarioId);
-    this.logger.log(`DELETE /posts/${id} - Baja lógica completada`);
+    this.logger.log(`DELETE /posts/${id.toString()} - Baja lógica completada`);
     return result;
   }
 
@@ -71,13 +73,13 @@ export class PostsController {
   @Post(':id/likes')
   @HttpCode(HttpStatus.CREATED)
   async addLike(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: Types.ObjectId,
     @Query('usuarioId') usuarioIdQuery: string,
     @Body() dto: Partial<UserActionDto>,
   ) {
     const usuarioId = usuarioIdQuery ?? dto?.usuarioId;
     this.logger.log(
-      `POST /posts/${id}/likes - Solicitud del usuario ${usuarioId ?? 'desconocido'}`,
+      `POST /posts/${id.toString()}/likes - Solicitud del usuario ${usuarioId ?? 'desconocido'}`,
     );
     return this.postsService.addLike(id, usuarioId);
   }
@@ -86,13 +88,13 @@ export class PostsController {
   @Delete(':id/likes')
   @HttpCode(HttpStatus.OK)
   async removeLike(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: Types.ObjectId,
     @Query('usuarioId') usuarioIdQuery: string,
     @Body() dto: Partial<UserActionDto>,
   ) {
     const usuarioId = usuarioIdQuery ?? dto?.usuarioId;
     this.logger.log(
-      `DELETE /posts/${id}/likes - Solicitud del usuario ${usuarioId ?? 'desconocido'}`,
+      `DELETE /posts/${id.toString()}/likes - Solicitud del usuario ${usuarioId ?? 'desconocido'}`,
     );
     return this.postsService.removeLike(id, usuarioId);
   }

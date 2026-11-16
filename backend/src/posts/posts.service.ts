@@ -163,9 +163,9 @@ export class PostsService {
    * Registra un "me gusta" solo si la publicación y el usuario existen y aún
    * no hay una acción de ese usuario en el arreglo de likes.
    */
-  async addLike(postId: string, usuarioId?: string) {
-    // Valida primero IDs, porque los datos deben tener formato ObjectId.
-    this.validateIds(postId, usuarioId, 'publicación');
+  async addLike(postId: Types.ObjectId, usuarioId?: string) {
+    // usuarioId llega en el body o query, por eso no lo valida la pipe de ruta.
+    this.validateUserId(usuarioId);
 
     const post = await this.postModel.findOne({
       _id: postId,
@@ -205,8 +205,8 @@ export class PostsService {
    * Quita un "me gusta" existente. Se valida antes de filtrar el arreglo para
    * distinguir entre eliminar una acción real y solicitar una que nunca existió.
    */
-  async removeLike(postId: string, usuarioId?: string) {
-    this.validateIds(postId, usuarioId, 'publicación');
+  async removeLike(postId: Types.ObjectId, usuarioId?: string) {
+    this.validateUserId(usuarioId);
 
     const post = await this.postModel.findOne({
       _id: postId,
@@ -251,13 +251,8 @@ export class PostsService {
    * de incluirlo en consultas que filtran isDeleted=false. Solo puede hacerlo
    * el creador o un usuario administrador.
    */
-  async remove(id: string, usuarioId?: string) {
-    if (!isValidObjectId(id)) {
-      throw new BadRequestException('El identificador de la publicación no es válido.');
-    }
-    if (!usuarioId || !isValidObjectId(usuarioId)) {
-      throw new BadRequestException('El identificador del usuario no es válido.');
-    }
+  async remove(id: Types.ObjectId, usuarioId?: string) {
+    this.validateUserId(usuarioId);
 
     const post = await this.postModel.findOne({
       _id: id,
@@ -294,20 +289,11 @@ export class PostsService {
   }
 
   /**
-   * Comprueba los identificadores antes de usarlos en consultas Mongoose.
-   * Así los valores ausentes o mal formados generan un error HTTP claro y no
-   * un error de conversión de MongoDB.
+   * Comprueba el ID de usuario, que llega desde el body o query y no pasa por
+   * ParseMongoIdPipe. Los IDs de publicación de estas operaciones ya llegan
+   * convertidos por la pipe aplicada a sus parámetros de ruta.
    */
-  private validateIds(
-    postId: string,
-    usuarioId: string | undefined,
-    entityName: string,
-  ): void {
-    if (!isValidObjectId(postId)) {
-      throw new BadRequestException(
-        `El identificador de la ${entityName} no es válido.`,
-      );
-    }
+  private validateUserId(usuarioId: string | undefined): void {
     if (!usuarioId || !isValidObjectId(usuarioId)) {
       throw new BadRequestException(
         'El identificador del usuario no es válido.',

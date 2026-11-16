@@ -27,16 +27,16 @@ export class ServicioComentarios {
    * Crea un comentario asociado a una publicación y a un usuario activos.
    * El esquema agrega automáticamente createdAt y updatedAt mediante timestamps.
    */
-  async crearComentario(publicacionId: string, datos: ComentarioDto) {
-    this.validarIdentificadores({
-      publicacionId,
-      usuarioId: datos.usuarioId,
-    });
+  async crearComentario(
+    publicacionId: Types.ObjectId,
+    datos: ComentarioDto,
+  ) {
+    this.validarUsuarioId(datos.usuarioId);
     await this.verificarPublicacionActiva(publicacionId);
     await this.verificarUsuarioActivo(datos.usuarioId);
 
     const comentario = await this.modeloComentario.create({
-      publicacionId: new Types.ObjectId(publicacionId),
+      publicacionId,
       usuarioId: new Types.ObjectId(datos.usuarioId),
       texto: datos.texto,
       modificado: false,
@@ -52,11 +52,13 @@ export class ServicioComentarios {
    * Lista los comentarios de una sola publicación. El orden secundario por ID
    * hace determinista la paginación cuando varios comentarios comparten fecha.
    */
-  async listarComentarios(publicacionId: string, datos: ListaComentariosDto) {
-    this.validarIdentificadores({ publicacionId });
+  async listarComentarios(
+    publicacionId: Types.ObjectId,
+    datos: ListaComentariosDto,
+  ) {
     await this.verificarPublicacionActiva(publicacionId);
 
-    const filtro = { publicacionId: new Types.ObjectId(publicacionId) };
+    const filtro = { publicacionId };
     // La página y el total usan el mismo filtro; Promise.all ejecuta las dos
     // consultas independientes en paralelo sin cambiar el resultado esperado.
     const [comentarios, total] = await Promise.all([
@@ -87,15 +89,11 @@ export class ServicioComentarios {
    * los clientes puedan distinguirlo del texto original.
    */
   async editarComentario(
-    publicacionId: string,
-    comentarioId: string,
+    publicacionId: Types.ObjectId,
+    comentarioId: Types.ObjectId,
     datos: ComentarioDto,
   ) {
-    this.validarIdentificadores({
-      publicacionId,
-      comentarioId,
-      usuarioId: datos.usuarioId,
-    });
+    this.validarUsuarioId(datos.usuarioId);
     await this.verificarPublicacionActiva(publicacionId);
     await this.verificarUsuarioActivo(datos.usuarioId);
 
@@ -130,7 +128,7 @@ export class ServicioComentarios {
 
   // Comprueba que la publicación exista y no haya sido eliminada lógicamente.
   private async verificarPublicacionActiva(
-    publicacionId: string,
+    publicacionId: Types.ObjectId,
   ): Promise<void> {
     const publicacion = await this.modeloPublicacion
       .findOne({ _id: publicacionId, isDeleted: false })
@@ -153,24 +151,14 @@ export class ServicioComentarios {
   }
 
   /**
-   * Valida todos los ObjectId recibidos y traduce el nombre técnico del campo
-   * a una etiqueta comprensible para construir el error que verá el cliente.
+   * Valida el ID de usuario recibido en el body. Los IDs de publicación y
+   * comentario llegan desde la ruta y son convertidos por ParseMongoIdPipe.
    */
-  private validarIdentificadores(
-    identificadores: Record<string, string | undefined>,
-  ): void {
-    for (const [campo, valor] of Object.entries(identificadores)) {
-      if (!valor || !isValidObjectId(valor)) {
-        const etiqueta =
-          campo === 'publicacionId'
-            ? 'publicación'
-            : campo === 'comentarioId'
-              ? 'comentario'
-              : 'usuario';
-        throw new BadRequestException(
-          `El identificador de ${etiqueta} no es válido.`,
-        );
-      }
+  private validarUsuarioId(usuarioId: string | undefined): void {
+    if (!usuarioId || !isValidObjectId(usuarioId)) {
+      throw new BadRequestException(
+        'El identificador del usuario no es válido.',
+      );
     }
   }
 }

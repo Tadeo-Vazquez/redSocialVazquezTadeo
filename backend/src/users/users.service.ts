@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { isValidObjectId, Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './users.schema.js';
 import { UpdateProfileDto } from './dtos/update-profile.dto.js';
 import { CloudinaryService } from '../utils/cloudinary.service.js';
@@ -23,9 +23,7 @@ export class UsersService {
    * Busca un perfil por ObjectId y solo devuelve cuentas activas. La contraseña
    * se excluye de la respuesta aunque el documento Mongoose la contenga.
    */
-  async findProfile(id: string) {
-    // Rechaza identificadores que no tengan el formato de ObjectId de MongoDB.
-    this.validateId(id);
+  async findProfile(id: Types.ObjectId) {
     // Solo devuelve usuarios que todavía están habilitados.
     const user = await this.userModel.findOne({
       _id: id,
@@ -45,12 +43,10 @@ export class UsersService {
    * imagen, si existe, se sube antes de guardar su URL pública en MongoDB.
    */
   async updateProfile(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateProfileDto,
     image?: Express.Multer.File,
   ) {
-    // Impide consultar MongoDB con un identificador mal formado.
-    this.validateId(id);
     // No se modifica fechaNacimiento directamente: primero se transforma en Date.
     const { fechaNacimiento, ...profileData } = dto;
     const update: Record<string, unknown> = { ...profileData };
@@ -90,14 +86,6 @@ export class UsersService {
       message: 'Perfil actualizado correctamente.',
       user: this.toPublicUser(user),
     };
-  }
-
-  // Comprueba el formato antes de consultar MongoDB para responder con un 400
-  // predecible en vez de dejar que Mongoose genere un error de conversión.
-  private validateId(id: string) {
-    if (!isValidObjectId(id)) {
-      throw new BadRequestException('El identificador del usuario no es válido.');
-    }
   }
 
   // Convierte el documento a un objeto normal y omite password para impedir
