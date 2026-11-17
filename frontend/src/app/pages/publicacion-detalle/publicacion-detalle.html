@@ -55,7 +55,7 @@
             <div class="author-details">
               <strong>{{ authorName }}</strong>
               @if (post.createdAt) {
-                <time>{{ post.createdAt | formatoFecha }}</time>
+                <time [attr.datetime]="post.createdAt">{{ post.createdAt | timeAgo }}</time>
               }
             </div>
           </header>

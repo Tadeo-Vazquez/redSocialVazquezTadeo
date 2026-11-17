@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { finalize, timeout } from 'rxjs';
-import { FormatoFechaPipe } from '../../pipes/formato-fecha.pipe';
+import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 import { Post, Posts } from '../../services/posts';
 import { PostLikes } from '../../services/post-likes';
 import { Session } from '../../services/session';
@@ -11,7 +11,7 @@ import { CommentsAside } from '../../shared/comments-aside/comments-aside';
 import { PublicacionImageDialog } from './image-dialog/publicacion-image-dialog';
 
 @Component({
-  imports: [AsideNav, CommentsAside, FormatoFechaPipe, MatDialogModule, RouterLink],
+  imports: [AsideNav, CommentsAside, TimeAgoPipe, MatDialogModule, RouterLink],
   selector: 'app-publicacion-detalle',
   styleUrl: './publicacion-detalle.scss',
   templateUrl: './publicacion-detalle.html',

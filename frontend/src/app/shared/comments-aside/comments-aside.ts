@@ -12,14 +12,14 @@ import {
   inject,
 } from '@angular/core';
 import { finalize, timeout } from 'rxjs';
-import { FormatoFechaPipe } from '../../pipes/formato-fecha.pipe';
+import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 import { CommentAuthor, Comments, PostComment } from '../../services/comments';
 import { CurrentUser } from '../../services/current-user';
 import { Post } from '../../services/posts';
 import { Session } from '../../services/session';
 
 @Component({
-  imports: [FormatoFechaPipe],
+  imports: [TimeAgoPipe],
   selector: 'app-comments-aside',
   templateUrl: './comments-aside.html',
   styleUrl: './comments-aside.scss',
