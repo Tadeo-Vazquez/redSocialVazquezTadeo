@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { Session } from '../../services/session';
+import { SessionTimer } from '../../services/session-timer';
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
@@ -16,6 +17,7 @@ export class Login {
   private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly sessionTimer = inject(SessionTimer);
 
   readonly loginForm = new FormGroup({
     loginInput: new FormControl('', {
@@ -71,6 +73,9 @@ export class Login {
         } catch (storageError) {
           console.error('[Login] No se pudo guardar la sesión en sessionStorage.', storageError);
         }
+
+        // Inicia el temporizador de sesión: 10 min hasta aviso, 15 min hasta logout.
+        this.sessionTimer.startTimer();
 
         const perfil = typeof response.user.perfil === 'string' ? response.user.perfil : '';
         const destination = perfil === 'administrador' ? '/admin-dashboard' : '/publicaciones';

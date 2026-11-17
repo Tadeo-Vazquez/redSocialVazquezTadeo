@@ -81,6 +81,22 @@ export class AuthController {
     return result;
   }
 
+  // El navegador no puede borrar directamente una cookie HttpOnly. Esta ruta
+  // responde con Set-Cookie para expirarla en el navegador que hizo la petición.
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  logout(@Res({ passthrough: true }) response: Response): void {
+    // Usamos la misma ruta y opciones de seguridad que al crear la cookie.
+    // Esto elimina la cookie del navegador, pero no revoca otras copias del JWT:
+    // estas siguen siendo válidas hasta su vencimiento.
+    response.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+  }
+
   private setAuthCookie(response: Response | undefined, accessToken: string): void {
     // HttpOnly impide que JavaScript lea el JWT; el navegador lo adjunta solo
     // en las solicitudes que coincidan con el dominio y la ruta de esta cookie.

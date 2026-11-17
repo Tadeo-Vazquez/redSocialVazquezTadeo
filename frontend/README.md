@@ -2,6 +2,16 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.5.
 
+## Sesión
+
+El backend guarda el JWT en una cookie HttpOnly al iniciar sesión o registrarse.
+El frontend envía credenciales en las peticiones de autenticación y, al iniciar,
+consulta `POST /auth/autorizar` antes de mostrar publicaciones o el login.
+Cerrar sesión elimina la cookie mediante `POST /auth/logout`.
+El frontend y el backend deben usar el mismo sitio (por ejemplo, `localhost`)
+y el origen del frontend debe estar permitido por `FRONTEND_URL` en el backend.
+En producción la cookie requiere HTTPS.
+
 ## Development server
 
 To start a local development server, run:

@@ -1,1 +1,10 @@
-<router-outlet />
+@if (isLoading) {
+  <!-- El estado se anuncia a lectores de pantalla; el spinner es decorativo. -->
+  <main class="loading-screen" role="status" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span>
+    <p>Validando sesión...</p>
+  </main>
+} @else {
+  <!-- El router muestra la página elegida una vez terminada la validación. -->
+  <router-outlet />
+}

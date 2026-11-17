@@ -38,10 +38,15 @@
 
   </nav>
 
-  <button class="logout-button" type="button" (click)="logout()">
+  <!-- Se deshabilita mientras se espera la respuesta para evitar solicitudes duplicadas. -->
+  <button class="logout-button" type="button" [disabled]="isLoggingOut" (click)="logout()">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10" />
     </svg>
     <span>Cerrar sesión</span>
   </button>
+  @if (logoutError) {
+    <!-- El error también se comunica a tecnologías de asistencia. -->
+    <p role="alert">{{ logoutError }}</p>
+  }
 </aside>

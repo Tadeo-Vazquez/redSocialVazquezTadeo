@@ -11,6 +11,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
+import { SessionTimer } from '../../services/session-timer';
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
@@ -22,6 +23,7 @@ export class Registro {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly sessionTimer = inject(SessionTimer);
 
   readonly registerForm = new FormGroup(
     {
@@ -179,6 +181,14 @@ export class Registro {
         this.errorMessage = '';
         console.log('[Registro] Registro completado exitosamente.', response);
         this.changeDetectorRef.markForCheck();
+
+        // Inicia el temporizador de sesión: 10 min hasta aviso, 15 min hasta logout.
+        this.sessionTimer.startTimer();
+
+        // Redirige a publicaciones tras un breve tiempo para que se vea el mensaje de éxito.
+        setTimeout(() => {
+          void this.router.navigate(['/publicaciones']);
+        }, 1500);
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
