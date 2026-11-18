@@ -32,6 +32,8 @@ export class MiPerfil implements OnInit {
   readonly pendingPostIds = new Set<string>();
 
   ngOnInit(): void {
+    // El perfil se carga desde la sesión; sin un ID no existe una consulta válida
+    // y se informa el problema en lugar de dejar la pantalla indefinidamente cargando.
     if (this.userId) {
       this.loadPosts();
     } else {
@@ -47,6 +49,7 @@ export class MiPerfil implements OnInit {
 
   toggleLike(post: Post): void {
     const userId = this.userId;
+    // Evita duplicar la misma mutación mientras la primera petición sigue pendiente.
     if (!userId || this.pendingPostIds.has(post._id)) {
       return;
     }
@@ -58,7 +61,9 @@ export class MiPerfil implements OnInit {
 
     likeAction.request
       .pipe(
+        // Una petición lenta no debe dejar la interacción bloqueada sin límite.
         timeout(10000),
+        // Se limpia el estado pendiente tanto si la API responde como si falla.
         finalize(() => {
           this.pendingPostIds.delete(post._id);
           this.changeDetectorRef.markForCheck();
@@ -113,10 +118,13 @@ export class MiPerfil implements OnInit {
     this.isLoadingPosts = true;
     this.postsError = '';
     this.changeDetectorRef.markForCheck();
+    // El perfil solo muestra las tres publicaciones más recientes; el límite se
+    // solicita al servicio y se aplica también localmente como defensa de la vista.
     this.postsService
       .getUserPosts(userId, 3)
       .pipe(
         timeout(8000),
+        // finalize centraliza el cierre del indicador para éxito, error y timeout.
         finalize(() => {
           this.isLoadingPosts = false;
           this.changeDetectorRef.markForCheck();

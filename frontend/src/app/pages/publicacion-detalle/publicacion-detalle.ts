@@ -39,6 +39,8 @@ export class PublicacionDetalle implements OnInit {
   actionError = '';
 
   get currentUserId(): string {
+    // Algunas respuestas antiguas usan id y otras _id; normalizarlo aquí evita
+    // repetir esa compatibilidad en cada interacción de la vista.
     return this.currentUser?._id ?? this.currentUser?.id ?? '';
   }
 
@@ -51,6 +53,8 @@ export class PublicacionDetalle implements OnInit {
   }
 
   get authorInitial(): string {
+    // Se deriva una inicial del nombre ya formateado para reutilizar la misma
+    // regla de presentación tanto con username como con nombre y apellido.
     return this.authorName.replace(/^@/, '').charAt(0).toUpperCase() || 'U';
   }
 
@@ -64,6 +68,7 @@ export class PublicacionDetalle implements OnInit {
 
   openImageDialog(): void {
     const post = this.post;
+    // El diálogo necesita una imagen real; si no hay publicación o URL, no se abre.
     if (!post?.imagenUrl) {
       return;
     }
@@ -108,6 +113,7 @@ export class PublicacionDetalle implements OnInit {
       .getPostById(postId)
       .pipe(
         timeout(10000),
+        // El indicador debe liberarse incluso al agotarse el tiempo de espera.
         finalize(() => {
           this.isLoading = false;
           this.changeDetectorRef.markForCheck();
@@ -135,6 +141,8 @@ export class PublicacionDetalle implements OnInit {
   toggleLike(): void {
     const post = this.post;
     const userId = this.currentUserId;
+    // No se puede mutar sin una publicación cargada o una sesión identificable;
+    // el bloqueo adicional evita enviar varias acciones simultáneas.
     if (!post || !userId || this.isLikePending) {
       return;
     }

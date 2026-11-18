@@ -32,6 +32,8 @@ export class EditarPerfil implements OnInit, OnDestroy {
   @Output() closed = new EventEmitter<void>();
   @Output() profileUpdated = new EventEmitter<CurrentUser>();
 
+  // Los controles no aceptan null; así los valores del formulario pueden usarse
+  // directamente al construir la petición y se mantienen compatibles con strictNullChecks.
   readonly profileForm = new FormGroup({
     nombre: new FormControl('', {
       nonNullable: true,
@@ -57,6 +59,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
   errorMessage = '';
   isSaving = false;
 
+  // El atributo max de input[type=date] espera una fecha ISO sin la parte horaria.
   get today(): string {
     return new Date().toISOString().slice(0, 10);
   }
@@ -75,6 +78,8 @@ export class EditarPerfil implements OnInit, OnDestroy {
     this.clearImagePreview();
   }
 
+  // Escuchar Escape en el documento permite cerrar el diálogo aunque el foco
+  // esté dentro de un campo. close() impide descartarlo durante el envío.
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.close();
@@ -87,6 +92,8 @@ export class EditarPerfil implements OnInit, OnDestroy {
   }
 
   onImageSelected(event: Event): void {
+    // El input proporciona el archivo como File; el evento se limpia en los
+    // casos inválidos para que el navegador permita volver a elegir el mismo archivo.
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     this.imageError = '';
@@ -122,6 +129,7 @@ export class EditarPerfil implements OnInit, OnDestroy {
   submit(): void {
     this.errorMessage = '';
     this.imageError = '';
+    // Muestra los mensajes de validación incluso en controles que el usuario no tocó.
     this.profileForm.markAllAsTouched();
 
     if (this.profileForm.invalid) {
@@ -149,6 +157,8 @@ export class EditarPerfil implements OnInit, OnDestroy {
     this.usersService
       .updateProfile(userId, formData)
       .pipe(
+        // finalize también se ejecuta ante error o cancelación, por lo que el
+        // botón de guardar siempre vuelve a quedar disponible.
         finalize(() => {
           this.isSaving = false;
           this.changeDetectorRef.markForCheck();
@@ -180,7 +190,8 @@ export class EditarPerfil implements OnInit, OnDestroy {
 
   private clearImagePreview(): void {
     if (this.imagePreview) {
-      // Libera la URL temporal para no mantener recursos locales al cerrar o reemplazar la foto.
+      // createObjectURL reserva una URL local asociada al archivo; revocarla
+      // libera ese recurso del navegador al cerrar o reemplazar la previsualización.
       URL.revokeObjectURL(this.imagePreview);
       this.imagePreview = '';
     }

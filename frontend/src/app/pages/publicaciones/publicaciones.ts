@@ -38,6 +38,8 @@ export class Publicaciones implements OnInit {
   actionError = '';
   readonly pendingPostIds = new Set<string>();
   readonly deletingPostIds = new Set<string>();
+  // Identifica la petición más reciente. Si una búsqueda anterior termina tarde,
+  // sus callbacks no deben sobrescribir los datos que corresponden a la vista actual.
   private loadRequestId = 0;
 
   get currentUserId(): string {
@@ -45,6 +47,8 @@ export class Publicaciones implements OnInit {
   }
 
   get canGoToPreviousPage(): boolean {
+    // Se deshabilita la paginación mientras carga para que offset no cambie
+    // varias veces y deje de corresponder a la respuesta mostrada.
     return this.offset > 0 && !this.isLoading;
   }
 
@@ -87,6 +91,8 @@ export class Publicaciones implements OnInit {
   }
 
   deletePost(post: Post): void {
+    // El Set bloquea únicamente la tarjeta afectada, sin impedir otras acciones
+    // en publicaciones distintas.
     if (!this.currentUserId || this.deletingPostIds.has(post._id)) {
       return;
     }
@@ -98,6 +104,7 @@ export class Publicaciones implements OnInit {
       .deletePost(post._id, this.currentUserId)
       .pipe(
         timeout(10000),
+        // El indicador se limpia también si la solicitud termina por error o timeout.
         finalize(() => {
           this.deletingPostIds.delete(post._id);
           this.changeDetectorRef.markForCheck();
@@ -119,6 +126,8 @@ export class Publicaciones implements OnInit {
 
   toggleLike(post: Post): void {
     const userId = this.currentUserId;
+    // Se rastrea la acción por ID para no emitir mutaciones duplicadas sobre la
+    // misma publicación durante una petición pendiente.
     if (!userId || this.pendingPostIds.has(post._id)) {
       return;
     }
@@ -164,6 +173,8 @@ export class Publicaciones implements OnInit {
   }
 
   private loadPosts(): void {
+    // Cada carga recibe una identidad propia para descartar respuestas obsoletas
+    // cuando se cambia de orden o página antes de que termine la solicitud anterior.
     const requestId = ++this.loadRequestId;
     this.isLoading = true;
     this.loadError = '';
@@ -173,6 +184,8 @@ export class Publicaciones implements OnInit {
       .getPosts(this.ordenar, this.offset, this.pageSize)
       .pipe(
         timeout({ first: 10000 }),
+        // Se finaliza por el mismo camino aunque el observable complete, falle o
+        // llegue al timeout; finishLoading ignora IDs que ya quedaron obsoletos.
         finalize(() => this.finishLoading(requestId)),
       )
       .subscribe({
@@ -210,6 +223,8 @@ export class Publicaciones implements OnInit {
   }
 
   private finishLoading(requestId: number): void {
+    // Solo la solicitud vigente puede apagar el indicador de carga; una respuesta
+    // antigua no debe hacer parecer que la petición más reciente ya terminó.
     if (requestId !== this.loadRequestId) {
       return;
     }

@@ -25,6 +25,8 @@ export class Registro {
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly sessionTimer = inject(SessionTimer);
 
+  // La mayoría de las reglas pertenecen a cada campo; la coincidencia entre
+  // contraseñas es una regla del grupo porque compara dos controles relacionados.
   readonly registerForm = new FormGroup(
     {
       nombre: new FormControl('', {
@@ -83,6 +85,8 @@ export class Registro {
 
   // Abre la vista previa de la imagen y valida el tamaño/mime antes de enviarla.
   onImageSelected(event: Event): void {
+    // Comprobar formato y tamaño en el navegador mejora la respuesta inmediata,
+    // pero el servidor también debe validar el archivo al recibirlo.
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     this.imageError = '';
@@ -116,6 +120,8 @@ export class Registro {
     console.log('[Registro] Evento submit disparado. Formulario válido:', this.registerForm.valid);
 
     if (this.registerForm.invalid) {
+      // Angular conserva errores por control y por grupo; ambos se reportan para
+      // facilitar el diagnóstico de reglas locales que no pasan.
       const invalidFields = Object.entries(this.registerForm.controls)
         .filter(([, control]) => control.invalid)
         .map(([name, control]) => ({ campo: name, errores: control.errors }));
@@ -137,6 +143,8 @@ export class Registro {
     }
 
     const birthDateIso = this.toIsoDate(this.registerForm.controls.fechaNacimiento.value);
+    // El validador del campo revisa formato/calendario; esta condición adicional
+    // protege el envío por si el valor se modifica desde otra fuente.
     const birthDate = new Date(`${birthDateIso}T00:00:00`);
     if (birthDate >= new Date()) {
       console.warn('[Registro] Validación local fallida.', {
@@ -152,6 +160,8 @@ export class Registro {
     const data = new FormData();
     const values = this.registerForm.getRawValue();
 
+    // FormData serializa conjuntamente el archivo y los campos para una petición
+    // multipart. El checkbox de administrador se traduce al campo perfil que espera la API.
     Object.entries(values).forEach(([key, value]) => {
       if (key === 'esAdmin') {
         if (value === true) {
@@ -221,6 +231,8 @@ export class Registro {
   }
 
   formatBirthDate(event: Event): void {
+    // El usuario puede escribir solo dígitos; se van agrupando como DD/MM/AAAA
+    // y se limita la entrada a ocho para mantener un valor que entienda el validador.
     const input = event.target as HTMLInputElement;
     const digits = input.value.replace(/\D/g, '').slice(0, 8);
     const day = digits.slice(0, 2);
@@ -239,6 +251,8 @@ export class Registro {
 
   private passwordsMatchValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
+      // Los errores de grupo permiten mostrar que la pareja no coincide sin
+      // asignar artificialmente el error a uno de los dos campos.
       const form = control as FormGroup;
       const password = form.controls['password']?.value;
       const repeatPassword = form.controls['repetirPassword']?.value;
@@ -251,6 +265,8 @@ export class Registro {
   private birthDateValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value as string;
+      // El campo puede estar vacío durante la edición; Validators.required se
+      // encarga de ese caso por separado.
       if (!value) {
         return null;
       }
@@ -261,6 +277,8 @@ export class Registro {
 
       const [day, month, year] = value.split('/').map(Number);
       const date = new Date(year, month - 1, day);
+      // JavaScript normaliza fechas imposibles (por ejemplo, 31/02) al mes
+      // siguiente; comparar sus componentes detecta esa normalización.
       const isValid =
         date.getFullYear() === year &&
         date.getMonth() === month - 1 &&
@@ -272,6 +290,8 @@ export class Registro {
   }
 
   private toIsoDate(value: string): string {
+    // El formulario muestra una fecha local legible, mientras que la API recibe
+    // el formato estándar YYYY-MM-DD.
     const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
     return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
   }

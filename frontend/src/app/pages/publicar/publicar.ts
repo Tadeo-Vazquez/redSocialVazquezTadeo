@@ -22,6 +22,8 @@ export class Publicar implements OnDestroy {
   private readonly session = inject(Session);
   readonly currentUser = this.session.getCurrentUser();
 
+  // Los valores no-null simplifican la lectura y normalización antes de crear
+  // FormData; cada campo valida longitud y presencia antes de enviar.
   readonly postForm = new FormGroup({
     titulo: new FormControl('', {
       nonNullable: true,
@@ -48,6 +50,8 @@ export class Publicar implements OnDestroy {
   }
 
   onImageSelected(event: Event): void {
+    // Validar el tipo y el peso antes del recortador reduce errores al procesar
+    // archivos que el servidor tampoco aceptaría.
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     this.imageError = '';
@@ -88,6 +92,8 @@ export class Publicar implements OnDestroy {
   }
 
   onImageCropped(event: ImageCroppedEvent): void {
+    // ngx-image-cropper entrega el resultado como Blob, que se conserva hasta que
+    // el usuario confirme el paso y se vaya a enviar la publicación.
     if (event.blob) {
       this.croppedImageBlob = event.blob;
     }
@@ -98,6 +104,8 @@ export class Publicar implements OnDestroy {
   }
 
   onZoomChange(event: Event): void {
+    // El control range produce texto; convertirlo a número mantiene el tipo que
+    // espera la transformación del recortador.
     const scale = Number((event.target as HTMLInputElement).value);
     this.imageTransform = { ...this.imageTransform, scale };
   }
@@ -126,6 +134,7 @@ export class Publicar implements OnDestroy {
 
     if (this.selectedImage) {
       if (!this.croppedImageBlob) {
+        // No avanzar hasta que el recortador haya producido el archivo final.
         this.imageError = 'Espera a que termine de procesarse el recorte.';
         return;
       }
@@ -151,6 +160,7 @@ export class Publicar implements OnDestroy {
   }
 
   submit(): void {
+    // Este método solo crea la publicación desde el segundo paso del flujo.
     if (this.step !== 2) {
       return;
     }
@@ -179,6 +189,7 @@ export class Publicar implements OnDestroy {
     this.postsService
       .createPost(data)
       .pipe(
+        // El formulario vuelve a habilitarse sin importar si la solicitud tuvo éxito.
         finalize(() => {
           this.isSubmitting = false;
           this.changeDetectorRef.markForCheck();
@@ -207,6 +218,8 @@ export class Publicar implements OnDestroy {
 
   private clearImagePreview(): void {
     if (this.imagePreview) {
+      // Las URLs creadas para previsualizar Blob/File son recursos temporales del
+      // navegador y deben liberarse al reemplazarlos o destruir el componente.
       URL.revokeObjectURL(this.imagePreview);
       this.imagePreview = '';
     }
