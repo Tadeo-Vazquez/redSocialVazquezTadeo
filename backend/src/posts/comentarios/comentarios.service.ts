@@ -116,9 +116,12 @@ export class ServicioComentarios {
       );
     }
 
-    comentario.texto = datos.texto;
-    comentario.modificado = true;
-    await comentario.save();
+    // Una petición sin cambios no debe marcar el comentario ni actualizar su fecha.
+    if (comentario.texto !== datos.texto) {
+      comentario.texto = datos.texto;
+      comentario.modificado = true;
+      await comentario.save();
+    }
 
     return {
       mensaje: 'Comentario modificado correctamente.',

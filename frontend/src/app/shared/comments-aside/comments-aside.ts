@@ -166,6 +166,12 @@ export class CommentsAside implements OnChanges {
       return;
     }
 
+    // Si el texto que se enviaría no cambió, salir de edición sin modificarlo.
+    if (text === comment.texto) {
+      this.cancelEdit();
+      return;
+    }
+
     this.isSaving = true;
     this.actionError = '';
     this.commentsService

@@ -38,9 +38,11 @@ describe('Inicio de la aplicación', () => {
     // Cada prueba debe responder todas las peticiones y dejar limpio el navegador.
     http.verify();
     sessionStorage.clear();
+    vi.useRealTimers();
   });
 
   it('muestra la carga y restaura el usuario antes de ir a publicaciones', async () => {
+    vi.useFakeTimers();
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
@@ -52,15 +54,19 @@ describe('Inicio de la aplicación', () => {
     expect(request.request.withCredentials).toBe(true);
     request.flush({ message: 'Sesión autorizada.', user: { _id: '123', perfil: 'usuario' } });
 
-    // La navegación es asíncrona: esperamos antes de comprobar la ruta y la vista.
-    await fixture.whenStable();
+    await vi.advanceTimersByTimeAsync(1999);
     fixture.detectChanges();
     expect(session.getCurrentUser()?._id).toBe('123');
     expect(TestBed.inject(Router).url).toBe('/publicaciones');
+    expect(fixture.nativeElement.querySelector('[role="status"]')).toBeTruthy();
+
+    await vi.advanceTimersByTimeAsync(1);
+    fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="status"]')).toBeNull();
   });
 
   it('borra los datos locales y va al login si la autorización falla', async () => {
+    vi.useFakeTimers();
     // Un perfil anterior no debe considerarse válido cuando el servidor rechaza el JWT.
     session.setCurrentUser({ _id: 'anterior' });
     const fixture = TestBed.createComponent(App);
@@ -71,10 +77,31 @@ describe('Inicio de la aplicación', () => {
       { status: 401, statusText: 'Unauthorized' },
     );
 
-    await fixture.whenStable();
+    await vi.advanceTimersByTimeAsync(1999);
     fixture.detectChanges();
     expect(session.getCurrentUser()).toBeNull();
     expect(TestBed.inject(Router).url).toBe('/login');
+    expect(fixture.nativeElement.querySelector('[role="status"]')).toBeTruthy();
+
+    await vi.advanceTimersByTimeAsync(1);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="status"]')).toBeNull();
+  });
+
+  it('mantiene la carga si la autorización tarda más de dos segundos', async () => {
+    vi.useFakeTimers();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const request = http.expectOne(`${API_URL}/auth/autorizar`);
+    await vi.advanceTimersByTimeAsync(2500);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="status"]')).toBeTruthy();
+
+    request.flush({ message: 'Sesión autorizada.', user: { _id: '123', perfil: 'usuario' } });
+    await vi.advanceTimersByTimeAsync(0);
+    fixture.detectChanges();
+    expect(TestBed.inject(Router).url).toBe('/publicaciones');
     expect(fixture.nativeElement.querySelector('[role="status"]')).toBeNull();
   });
 });

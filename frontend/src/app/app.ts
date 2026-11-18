@@ -16,12 +16,16 @@ export class App implements OnInit {
   private readonly router = inject(Router);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly sessionTimer = inject(SessionTimer);
+  private minimumLoadingTime!: Promise<void>;
 
   // La plantilla mantiene visible el spinner mientras se comprueba la sesión y
   // se completa la navegación inicial, evitando mostrar una página intermedia.
   isLoading = true;
 
   ngOnInit(): void {
+    // El mínimo empieza junto con la validación, no después de recibir la respuesta.
+    this.minimumLoadingTime = new Promise((resolve) => setTimeout(resolve, 2000));
+
     // Esta comprobación se ejecuta al crear el componente raíz. No confiamos
     // únicamente en un usuario guardado localmente: su cookie puede haber vencido.
     this.auth.authorize().subscribe({
@@ -44,22 +48,20 @@ export class App implements OnInit {
   }
 
   private finishLoading(destination: string): void {
-    // navigate devuelve una promesa: esperamos su resultado antes de ocultar la
-    // carga. Una navegación cancelada devuelve false; una fallida puede rechazarla.
-    void this.router.navigate([destination]).then(
+    // El spinner permanece hasta completar tanto la navegación como el tiempo mínimo.
+    const navigation = this.router.navigate([destination]).then(
       (navigated) => {
         if (!navigated) {
           console.error('[App] No se pudo completar la navegación inicial.');
         }
-        this.isLoading = false;
-        // Notifica a Angular que debe actualizar la plantilla tras la promesa.
-        this.changeDetectorRef.markForCheck();
       },
       (error) => {
         console.error('[App] Error en la navegación inicial.', error);
-        this.isLoading = false;
-        this.changeDetectorRef.markForCheck();
       },
     );
+    void Promise.all([navigation, this.minimumLoadingTime]).then(() => {
+      this.isLoading = false;
+      this.changeDetectorRef.markForCheck();
+    });
   }
 }
