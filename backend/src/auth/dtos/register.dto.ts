@@ -20,11 +20,17 @@ export class RegisterDto {
   
   @IsString({ message: 'El nombre debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'El nombre es obligatorio.' })
+  @Matches(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, {
+    message: 'El nombre solo puede contener letras y espacios.',
+  })
   @MaxLength(50, { message: 'El nombre no puede superar los 50 caracteres.' })
   nombre: string;
 
   @IsString({ message: 'El apellido debe ser una cadena de texto.' })
   @IsNotEmpty({ message: 'El apellido es obligatorio.' })
+  @Matches(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, {
+    message: 'El nombre solo puede contener letras y espacios.',
+  })
   @MaxLength(50, { message: 'El apellido no puede superar los 50 caracteres.' })
   apellido: string;
 
