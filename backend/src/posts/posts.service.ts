@@ -6,12 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import {
-  isValidObjectId,
-  Model,
-  PipelineStage,
-  Types,
-} from 'mongoose';
+import { isValidObjectId, Model, PipelineStage, Types } from 'mongoose';
 import { User, UserDocument } from '../users/users.schema.js';
 import { CloudinaryService } from '../utils/cloudinary.service.js';
 import { CreatePostDto } from './dtos/create-post.dto.js';
@@ -21,8 +16,12 @@ import { ListPostsDto } from './dtos/list-posts.dto.js';
 @Injectable()
 export class PostsService {
   constructor(
+    // Los modelos representan colecciones de MongoDB y permiten consultas,
+    // creación de documentos y operaciones de agregación de forma tipada.
     @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    // Encapsula las operaciones externas de Cloudinary para mantenerlas fuera
+    // de las consultas y reglas de negocio principales.
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
@@ -32,7 +31,8 @@ export class PostsService {
    * un archivo que ya no tenga una publicación asociada.
    */
   async create(dto: CreatePostDto, image?: Express.Multer.File) {
-    // La publicación solo puede pertenecer a una cuenta activa existente.
+    // Primero se valida la relación autor-publicación: el ID recibido en el DTO
+    // debe corresponder a un usuario existente que todavía esté activo.
     const user = await this.userModel.findOne({
       _id: dto.usuarioId,
       isDeleted: false,
@@ -42,10 +42,14 @@ export class PostsService {
       throw new NotFoundException('Usuario no encontrado.');
     }
 
+    // Sin imagen, ambos valores quedan vacíos. Si hay archivo, se reemplazan
+    // con la URL pública y el public_id necesario para eliminarlo posteriormente.
     let imageUrl = '';
     let imagePublicId = '';
 
-    // La imagen es opcional; si existe se guarda primero en Cloudinary.
+    // La imagen es opcional. Se sube antes de crear el documento porque su
+    // public_id se necesita dentro de MongoDB y debe estar disponible si luego
+    // hace falta deshacer la operación.
     if (image) {
       const uploadedImage = await this.cloudinaryService.uploadImage(
         image.buffer,
@@ -56,7 +60,8 @@ export class PostsService {
     }
 
     try {
-      // Registra la relación con el usuario y establece likes vacío e isDeleted falso.
+      // Mongoose crea el documento y aplica el esquema. Se establece explícitamente
+      // el estado inicial: ningún like y una publicación visible (isDeleted=false).
       const post = await this.postModel.create({
         usuarioId: user._id,
         titulo: dto.titulo,
@@ -67,15 +72,20 @@ export class PostsService {
         isDeleted: false,
       });
 
+      // La respuesta combina un mensaje de confirmación con el documento creado,
+      // de modo que el cliente pueda mostrarlo o actualizar su feed sin consultar otra vez.
       return {
         message: 'Publicación creada correctamente.',
         post,
       };
     } catch (error) {
-      // Evita guardar una imagen huérfana si MongoDB rechaza la publicación.
+      // Patrón de compensación: si MongoDB rechaza el documento después de subir
+      // la imagen, se elimina el archivo remoto para evitar recursos huérfanos.
       if (imagePublicId) {
         await this.cloudinaryService.deleteImage(imagePublicId);
       }
+      // Relanzar el mismo error conserva su tipo y detalles originales para que
+      // NestJS pueda generar la respuesta HTTP correspondiente.
       throw error;
     }
   }
@@ -86,27 +96,34 @@ export class PostsService {
    * el mismo conjunto de publicaciones activas.
    */
   async findAll(dto: ListPostsDto) {
-    // offset indica desde qué publicación comenzar y limit cuántas traer.
     const offset = dto.offset ?? 0;
     const limit = dto.limit ?? 10;
+
+    // El filtro comienza excluyendo publicaciones dadas de baja. Si el DTO
+    // incluye usuarioId, se añade un filtro adicional para ese autor.
     const match: Record<string, unknown> = { isDeleted: false };
 
     if (dto.usuarioId) {
       match.usuarioId = new Types.ObjectId(dto.usuarioId);
     }
 
+    // El pipeline organiza las operaciones en el mismo orden en que MongoDB
+    // las ejecutará: filtrar, calcular, ordenar, paginar y contar.
     const pipeline: PipelineStage[] = [
-      // Solo se buscan publicaciones que no estén dadas de baja.
+      // $match reduce el conjunto desde el principio y evita procesar
+      // publicaciones eliminadas o documentos ajenos al filtro de usuario.
       { $match: match },
       {
         $addFields: {
-          // Obtiene la cantidad real de elementos del arreglo likes.
+          // $size cuenta la cantidad de elementos de likes. $ifNull usa [] como
+          // respaldo cuando el arreglo no existe o tiene valor null.
           likesCount: { $size: { $ifNull: ['$likes', []] } },
         },
       },
       {
         $sort:
-          // Ordena por likes o, por defecto, por fecha descendente.
+          // Para ordenar por likes se prioriza likesCount y createdAt funciona
+          // como desempate. Sin ese criterio, la fecha descendente determina todo el orden.
           dto.ordenar === 'likes'
             ? { likesCount: -1, createdAt: -1 }
             : { createdAt: -1 },
@@ -114,11 +131,13 @@ export class PostsService {
       {
         $facet: {
           posts: [
-            // $facet permite obtener la página y el total en una sola agregación:
-            // esta rama pagina, incorpora el perfil del autor y oculta datos privados.
+            // Esta rama calcula la página solicitada y luego incorpora el perfil
+            // del autor. $facet permite mantener esta operación en la misma consulta.
             { $skip: offset },
             { $limit: limit },
             {
+              // $lookup busca documentos en users cuyo _id coincida con usuarioId.
+              // El resultado queda en el arreglo usuario hasta convertirlo en objeto.
               $lookup: {
                 from: 'users',
                 localField: 'usuarioId',
@@ -128,22 +147,29 @@ export class PostsService {
             },
             {
               $set: {
+                // $arrayElemAt selecciona el primer usuario encontrado. El índice 0
+                // convierte la coincidencia única del arreglo en un objeto visible.
                 usuario: { $arrayElemAt: ['$usuario', 0] },
               },
             },
             {
               $project: {
-                // Retorna también el total general y las publicaciones de la página.
+                // Los valores 0 excluyen campos sensibles sin eliminar las demás
+                // propiedades del usuario ni de la publicación.
                 'usuario.password': 0,
                 'usuario.isDeleted': 0,
               },
             },
           ],
+          // Cuenta los documentos que llegaron a $facet después de $match,
+          // antes de que la rama posts aplique $skip y $limit.
           total: [{ $count: 'count' }],
         },
       },
       {
         $project: {
+          // Mantiene la lista y toma el primer valor del arreglo de conteo.
+          // $ifNull devuelve 0 cuando la agregación no encontró publicaciones.
           posts: 1,
           total: { $ifNull: [{ $arrayElemAt: ['$total.count', 0] }, 0] },
         },
@@ -151,6 +177,8 @@ export class PostsService {
     ];
 
     const [result] = await this.postModel.aggregate(pipeline).exec();
+    // Los operadores ?? protegen esta respuesta si MongoDB devuelve undefined.
+    // offset y limit permiten al cliente saber qué porción del total recibió.
     return {
       offset,
       limit,
@@ -165,19 +193,22 @@ export class PostsService {
    * mantiene coherente el formato que espera la tarjeta reutilizada en detalle.
    */
   async findOne(id: Types.ObjectId) {
-    // La coincidencia por ID y isDeleted excluye recursos inexistentes o dados de baja.
+    // Las dos condiciones de $match forman una búsqueda segura: el ID debe
+    // coincidir exactamente y el documento debe seguir activo.
     const [post] = await this.postModel
       .aggregate([
         { $match: { _id: id, isDeleted: false } },
         {
           $addFields: {
-            // likesCount permite que la interfaz no tenga que contar un arreglo en cada render.
+            // likesCount entrega el total calculado por MongoDB y evita que
+            // la interfaz tenga que contar el arreglo durante cada render.
             likesCount: { $size: { $ifNull: ['$likes', []] } },
           },
         },
         {
           $lookup: {
-            // Resuelve la referencia del autor para mostrar nombre, usuario y avatar.
+            // Une la publicación con users mediante usuarioId, permitiendo mostrar
+            // nombre, username y avatar sin una consulta adicional al autor.
             from: 'users',
             localField: 'usuarioId',
             foreignField: '_id',
@@ -186,12 +217,15 @@ export class PostsService {
         },
         {
           $set: {
+            // Convierte el arreglo de coincidencias creado por $lookup en un
+            // objeto usuario directamente accesible desde la respuesta.
             usuario: { $arrayElemAt: ['$usuario', 0] },
           },
         },
         {
           $project: {
-            // La respuesta pública solo necesita datos de perfil; nunca se expone el hash de clave.
+            // Se excluyen credenciales y el estado interno de la cuenta. Los demás
+            // campos del perfil incluido permanecen disponibles para la interfaz.
             'usuario.password': 0,
             'usuario.isDeleted': 0,
           },
@@ -202,6 +236,8 @@ export class PostsService {
     if (!post) {
       throw new NotFoundException('Publicación no encontrada.');
     }
+    // Se devuelve el único resultado esperado, ya que el ID identifica una
+    // publicación y $match garantiza que su estado sea activo.
     return post;
   }
 
@@ -210,9 +246,12 @@ export class PostsService {
    * no hay una acción de ese usuario en el arreglo de likes.
    */
   async addLike(postId: Types.ObjectId, usuarioId?: string) {
-    // usuarioId llega en el body o query, por eso no lo valida la pipe de ruta.
+    // usuarioId llega en el body o query, por eso no pasa automáticamente por
+    // ParseMongoIdPipe y debe validarse explícitamente en el servicio.
     this.validateUserId(usuarioId);
 
+    // La modificación solo puede afectar una publicación activa: una publicación
+    // eliminada se considera inexistente para esta operación.
     const post = await this.postModel.findOne({
       _id: postId,
       isDeleted: false,
@@ -230,7 +269,8 @@ export class PostsService {
     }
 
     const userObjectId = new Types.ObjectId(usuarioId);
-    // Buscar repetidos antes de modificar el arreglo evita un segundo like.
+    // Mongoose devuelve los likes como ObjectId. Comparar sus representaciones
+    // de texto permite detectar si el usuario ya agregó su like anteriormente.
     if (post.likes.some((likeId) => likeId.toString() === usuarioId)) {
       throw new ConflictException(
         'El usuario ya indicó que le gusta esta publicación.',
@@ -238,8 +278,12 @@ export class PostsService {
     }
 
     post.likes.push(userObjectId);
+    // save persiste la modificación del documento y ejecuta las validaciones
+    // y middlewares definidos en el esquema de Mongoose.
     await post.save();
 
+    // likes informa el contador final y likedByUser permite actualizar el estado
+    // visual del cliente sin hacer una consulta adicional.
     return {
       message: 'Me gusta agregado correctamente.',
       likes: post.likes.length,
@@ -254,6 +298,8 @@ export class PostsService {
   async removeLike(postId: Types.ObjectId, usuarioId?: string) {
     this.validateUserId(usuarioId);
 
+    // Buscar la publicación antes de modificar el arreglo garantiza que la
+    // operación se haga únicamente sobre contenido activo.
     const post = await this.postModel.findOne({
       _id: postId,
       isDeleted: false,
@@ -270,6 +316,8 @@ export class PostsService {
       throw new NotFoundException('Usuario no encontrado.');
     }
 
+    // hasLiked conserva el resultado de la comprobación anterior a la mutación:
+    // permite diferenciar una acción válida de una solicitud inválida.
     const hasLiked = post.likes.some(
       (likeId) => likeId.toString() === usuarioId,
     );
@@ -280,9 +328,10 @@ export class PostsService {
       );
     }
 
-    post.likes = post.likes.filter(
-      (likeId) => likeId.toString() !== usuarioId,
-    );
+    // filter crea un nuevo arreglo que conserva todos los likes salvo el que
+    // corresponde al ID recibido. Así no se modifica directamente la variable
+    // mientras se recorre, y se sustituye el arreglo completo al guardar.
+    post.likes = post.likes.filter((likeId) => likeId.toString() !== usuarioId);
     await post.save();
 
     return {
@@ -300,6 +349,8 @@ export class PostsService {
   async remove(id: Types.ObjectId, usuarioId?: string) {
     this.validateUserId(usuarioId);
 
+    // El filtro de isDeleted=false evita ejecutar una segunda eliminación sobre
+    // una publicación que ya fue dada de baja.
     const post = await this.postModel.findOne({
       _id: id,
       isDeleted: false,
@@ -316,15 +367,18 @@ export class PostsService {
       throw new NotFoundException('Usuario no encontrado.');
     }
 
+    // El autor coincide si su ID almacenado es igual al ID recibido. Además,
+    // el perfil administrador concede permiso para eliminar contenido ajeno.
     const isCreator = post.usuarioId.toString() === usuarioId;
     const isAdministrator = actor.perfil === 'administrador';
-    // El creador puede eliminar su publicación y un administrador puede eliminar cualquiera.
     if (!isCreator && !isAdministrator) {
       throw new ForbiddenException(
         'Solo el creador o un administrador pueden eliminar la publicación.',
       );
     }
 
+    // Borrado lógico: se conserva el documento físico y sus relaciones. Al cambiar
+    // isDeleted a true, los filtros activos dejan de devolver esta publicación.
     post.isDeleted = true;
     await post.save();
 
