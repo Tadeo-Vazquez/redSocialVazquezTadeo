@@ -92,7 +92,7 @@ export class AuthController {
     response.clearCookie('access_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'none',
       path: '/',
     });
   }
@@ -105,9 +105,9 @@ export class AuthController {
       // En producción obliga a transportar la cookie por HTTPS; en desarrollo
       // local permite probar HTTP sin configurar certificados.
       secure: process.env.NODE_ENV === 'production',
-      // Lax permite la navegación normal al sitio y reduce el envío desde
-      // solicitudes iniciadas por sitios externos.
-      sameSite: 'lax',
+      // None permite que la cookie se envíe en peticiones cross-site (Vercel a Render).
+      // Requiere secure: true en producción.
+      sameSite: 'none',
       // Express recibe maxAge en milisegundos; la constante compartida está en minutos.
       maxAge: AUTH_TOKEN_TTL_MINUTES * 60 * 1000,
       // Hace que la cookie esté disponible para las rutas de autenticación y API.
