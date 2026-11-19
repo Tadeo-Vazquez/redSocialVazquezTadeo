@@ -108,7 +108,7 @@ export class SessionWarningDialog {
   /**
    * Intenta extender la sesión llamando a /auth/refrescar.
    * Si es exitoso, cierra el modal con la nueva fecha de expiración.
-   * Si falla, muestra un error pero permite cerrar.
+   * Si falla, cierra el modal para que el timer maneje la expiración.
    */
   extend(): void {
     if (this.isExtending) {
@@ -116,16 +116,18 @@ export class SessionWarningDialog {
     }
 
     this.isExtending = true;
+    console.log('[SessionWarningDialog] Iniciando extensión de sesión...');
 
     // Solicita un nuevo token al backend.
     this.auth.refresh().subscribe({
       next: (response) => {
+        console.log('[SessionWarningDialog] Extensión exitosa. Nueva expiración:', response.expiresAt);
         this.dialogRef.close(response.expiresAt);
       },
       error: (error) => {
-        console.error('[SessionWarningDialog] No se pudo extender la sesión.', error);
-        this.isExtending = false;
-        // El usuario puede intentar nuevamente o cerrar sesión.
+        console.error('[SessionWarningDialog] Error al extender la sesión:', error);
+        // Cierra el modal sin la nueva expiración para que se maneje como cierre de sesión.
+        this.dialogRef.close(false);
       },
     });
   }
