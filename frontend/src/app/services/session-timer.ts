@@ -48,6 +48,13 @@ export class SessionTimer {
    * Muestra un modal antes del vencimiento. Ofrece extender o cerrar sesión.
    */
   private showWarningDialog(): void {
+    // Cancela el timeout de expiración mientras el usuario decide.
+    // Esto previene que se cierre la sesión mientras se está procesando la extensión.
+    if (this.sessionTimeout) {
+      clearTimeout(this.sessionTimeout);
+      this.sessionTimeout = null;
+    }
+
     this.currentDialogRef = this.dialog.open(SessionWarningDialog, {
       disableClose: true,
       width: '400px',
