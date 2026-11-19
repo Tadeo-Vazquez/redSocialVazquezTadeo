@@ -36,13 +36,13 @@ describe('SessionTimer', () => {
     vi.useRealTimers();
   });
 
-  it('shows the warning five minutes before server expiry, regardless of user activity', () => {
+  it('shows the warning one minute before server expiry, regardless of user activity', () => {
     const timer = TestBed.inject(SessionTimer);
-    timer.startTimer(Date.now() + 15 * 60 * 1000);
+    timer.startTimer(Date.now() + 2 * 60 * 1000);
 
-    vi.advanceTimersByTime(9 * 60 * 1000);
+    vi.advanceTimersByTime(59 * 1000);
     document.dispatchEvent(new Event('click'));
-    vi.advanceTimersByTime(60 * 1000);
+    vi.advanceTimersByTime(2 * 1000);
 
     expect(dialog.open).toHaveBeenCalledOnce();
   });

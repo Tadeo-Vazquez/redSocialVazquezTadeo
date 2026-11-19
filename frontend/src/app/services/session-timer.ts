@@ -13,7 +13,8 @@ export class SessionTimer {
   private readonly session = inject(Session);
   private readonly dialog = inject(MatDialog);
 
-  private readonly WARNING_BEFORE_EXPIRATION_MS = 5 * 60 * 1000;
+  // ⏰ TESTING: 1 minuto para pruebas rápidas (cambiar a 5 para producción)
+  private readonly WARNING_BEFORE_EXPIRATION_MS = 1 * 60 * 1000;
 
   private sessionTimeout: ReturnType<typeof setTimeout> | null = null;
   private warningTimeout: ReturnType<typeof setTimeout> | null = null;
