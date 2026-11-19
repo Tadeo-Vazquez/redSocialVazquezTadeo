@@ -75,7 +75,7 @@ export class Login {
         }
 
         // Inicia el temporizador de sesión: 10 min hasta aviso, 15 min hasta logout.
-        this.sessionTimer.startTimer();
+        this.sessionTimer.startTimer(response.expiresAt);
 
         const perfil = typeof response.user.perfil === 'string' ? response.user.perfil : '';
         const destination = perfil === 'administrador' ? '/admin-dashboard' : '/publicaciones';

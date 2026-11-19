@@ -13,6 +13,7 @@ import { User, UserDocument } from '../users/users.schema.js';
 import { RegisterDto } from './dtos/register.dto.js';
 import { LoginDto } from './dtos/login.dto.js';
 import { CloudinaryService } from '../utils/cloudinary.service.js';
+import { AUTH_TOKEN_TTL_MINUTES } from './auth.constants.js';
 
 @Injectable()
 export class AuthService {
@@ -173,12 +174,13 @@ export class AuthService {
    * copia potencialmente desactualizada de los datos guardados en el JWT.
    */
   async authorize(accessToken?: string) {
-    const user = await this.getActiveUserFromToken(accessToken);
+    const { user, expiresAt } = await this.getActiveUserFromToken(accessToken);
 
     // Se devuelve el perfil actual y nunca el hash de contraseña ni el JWT.
     return {
       message: 'Sesión autorizada.',
       user: this.toPublicUser(user),
+      expiresAt,
     };
   }
 
@@ -189,7 +191,7 @@ export class AuthService {
   async refresh(accessToken?: string) {
     // No se renueva un token vencido: primero se verifica firma y `exp` igual
     // que en /autorizar. Luego se emite otro JWT desde los datos actuales del usuario.
-    const user = await this.getActiveUserFromToken(accessToken);
+    const { user } = await this.getActiveUserFromToken(accessToken);
     return this.createSessionResponse('Sesión renovada correctamente.', user);
   }
 
@@ -197,18 +199,20 @@ export class AuthService {
    * Centraliza la verificación de una sesión para autorizar y refrescar:
    * comprueba el JWT, valida su identificador y confirma que la cuenta siga activa.
    */
-  private async getActiveUserFromToken(accessToken?: string): Promise<UserDocument> {
+  private async getActiveUserFromToken(
+    accessToken?: string,
+  ): Promise<{ user: UserDocument; expiresAt: number }> {
     // Sin cookie no existe una sesión que se pueda validar; se usa 401 para
     // que el frontend sepa que debe pedir login en lugar de tratarlo como error 200.
     if (!accessToken) {
       throw new UnauthorizedException('No hay una sesión activa.');
     }
 
-    let payload: { sub?: unknown };
+    let payload: { sub?: unknown; exp?: unknown };
     try {
       // verifyAsync comprueba la firma con JWT_SECRET y el vencimiento `exp`;
       // también rechaza tokens alterados o firmados con otra clave.
-      payload = await this.jwtService.verifyAsync<{ sub?: unknown }>(accessToken);
+      payload = await this.jwtService.verifyAsync<{ sub?: unknown; exp?: unknown }>(accessToken);
     } catch {
       throw new UnauthorizedException('El token es inválido o expiró.');
     }
@@ -217,6 +221,9 @@ export class AuthService {
     // evita errores de casteo si el token contiene un identificador mal formado.
     if (typeof payload.sub !== 'string' || !isValidObjectId(payload.sub)) {
       throw new UnauthorizedException('El token no identifica un usuario válido.');
+    }
+    if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+      throw new UnauthorizedException('El token no tiene una fecha de expiración válida.');
     }
 
     // El token podría seguir vigente aunque la cuenta haya sido deshabilitada
@@ -228,7 +235,7 @@ export class AuthService {
       throw new UnauthorizedException('La cuenta no existe o está deshabilitada.');
     }
 
-    return user;
+    return { user, expiresAt: payload.exp * 1000 };
   }
 
   /**
@@ -239,7 +246,9 @@ export class AuthService {
     // Firma un token con la identidad y el rol ya guardados en la base de datos.
     // `sub` (subject) es el identificador estable del usuario; `role` habilitará
     // comprobaciones de permisos y `username` evita consultar el nombre en cada request.
+    const issuedAt = Math.floor(Date.now() / 1000);
     const accessToken = await this.jwtService.signAsync({
+      iat: issuedAt,
       sub: user._id.toString(),
       username: user.username,
       // role conserva compatibilidad con consumidores existentes; rol es el
@@ -251,6 +260,7 @@ export class AuthService {
     return {
       message,
       user: this.toPublicUser(user),
+      expiresAt: (issuedAt + AUTH_TOKEN_TTL_MINUTES * 60) * 1000,
       // El controlador extrae este campo y lo coloca en una cookie HttpOnly;
       // no debe formar parte del JSON que recibe el frontend.
       accessToken,

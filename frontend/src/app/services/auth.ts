@@ -14,6 +14,7 @@ export interface LoginRequest {
 export interface AuthResponse {
   message: string;
   user: CurrentUser;
+  expiresAt: number;
 }
 
 @Injectable({

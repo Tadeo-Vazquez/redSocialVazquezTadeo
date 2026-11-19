@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
 
 /**
- * Modal que advierte al usuario que su sesión expira en 5 minutos.
+ * Modal que advierte al usuario que su sesión está por expirar.
  * Ofrece dos opciones: extender la sesión (refrescar token) o cerrar sesión.
  */
 @Component({
@@ -15,7 +15,7 @@ import { Auth } from '../../services/auth';
     <div class="session-warning">
       <h2 mat-dialog-title>Tu sesión está por expirar</h2>
       <mat-dialog-content>
-        <p>Queda <strong>poco tiempo</strong> para que se cierre tu sesión por inactividad.</p>
+        <p>Queda <strong>poco tiempo</strong> antes de que expire tu sesión.</p>
         <p>¿Quieres continuar usando la aplicación?</p>
       </mat-dialog-content>
       <mat-dialog-actions>
@@ -107,7 +107,7 @@ export class SessionWarningDialog {
 
   /**
    * Intenta extender la sesión llamando a /auth/refrescar.
-   * Si es exitoso, cierra el modal con true.
+   * Si es exitoso, cierra el modal con la nueva fecha de expiración.
    * Si falla, muestra un error pero permite cerrar.
    */
   extend(): void {
@@ -119,9 +119,8 @@ export class SessionWarningDialog {
 
     // Solicita un nuevo token al backend.
     this.auth.refresh().subscribe({
-      next: () => {
-        // Éxito: cierra el modal y el timer se reinicia.
-        this.dialogRef.close(true);
+      next: (response) => {
+        this.dialogRef.close(response.expiresAt);
       },
       error: (error) => {
         console.error('[SessionWarningDialog] No se pudo extender la sesión.', error);

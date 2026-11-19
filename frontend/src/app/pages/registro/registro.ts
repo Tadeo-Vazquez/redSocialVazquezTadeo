@@ -193,7 +193,7 @@ export class Registro {
         this.changeDetectorRef.markForCheck();
 
         // Inicia el temporizador de sesión: 10 min hasta aviso, 15 min hasta logout.
-        this.sessionTimer.startTimer();
+        this.sessionTimer.startTimer(response.expiresAt);
 
         // Redirige a publicaciones tras un breve tiempo para que se vea el mensaje de éxito.
         setTimeout(() => {

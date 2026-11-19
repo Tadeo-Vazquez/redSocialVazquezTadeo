@@ -33,8 +33,8 @@ export class App implements OnInit {
         // Guardamos el perfil actualizado para los guards y las vistas; el JWT
         // permanece en la cookie HttpOnly y nunca se copia a sessionStorage.
         this.session.setCurrentUser(response.user);
-        // Inicia el temporizador de sesión: 10 min hasta aviso, 15 min hasta logout.
-        this.sessionTimer.startTimer();
+        // Usa el vencimiento real del token, también al restaurar la sesión tras recargar.
+        this.sessionTimer.startTimer(response.expiresAt);
         this.finishLoading('/publicaciones');
       },
       error: (error) => {
