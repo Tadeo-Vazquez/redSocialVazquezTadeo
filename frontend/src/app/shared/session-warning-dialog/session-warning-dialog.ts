@@ -19,7 +19,7 @@ import { Auth } from '../../services/auth';
         <p>¿Quieres continuar usando la aplicación?</p>
       </mat-dialog-content>
       <mat-dialog-actions>
-        <button (click)="close(false)" class="cancel-button">Cerrar sesión</button>
+        <button (click)="close()" class="cancel-button">Cerrar sesión</button>
         <button (click)="extend()" class="extend-button" [disabled]="isExtending">
           {{ isExtending ? 'Extendiendo...' : 'Extender sesión' }}
         </button>
@@ -93,7 +93,7 @@ import { Auth } from '../../services/auth';
   `],
 })
 export class SessionWarningDialog {
-  private readonly dialogRef = inject(MatDialogRef<SessionWarningDialog>);
+  private readonly dialogRef = inject(MatDialogRef<SessionWarningDialog, number | false>);
   private readonly auth = inject(Auth);
 
   isExtending = false;
@@ -101,8 +101,8 @@ export class SessionWarningDialog {
   /**
    * Cierra el modal sin extender la sesión.
    */
-  close(extended: boolean): void {
-    this.dialogRef.close(extended);
+  close(): void {
+    this.dialogRef.close(false);
   }
 
   /**

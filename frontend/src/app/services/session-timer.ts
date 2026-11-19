@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Session } from './session';
-import { Auth } from './auth';
 import { SessionWarningDialog } from '../shared/session-warning-dialog/session-warning-dialog';
 
 /** Gestiona el aviso y el vencimiento según la expiración real del token. */
@@ -12,7 +11,6 @@ import { SessionWarningDialog } from '../shared/session-warning-dialog/session-w
 export class SessionTimer {
   private readonly router = inject(Router);
   private readonly session = inject(Session);
-  private readonly auth = inject(Auth);
   private readonly dialog = inject(MatDialog);
 
   private readonly WARNING_BEFORE_EXPIRATION_MS = 5 * 60 * 1000;
