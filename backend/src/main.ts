@@ -7,8 +7,12 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4200';
+  console.log(`[Bootstrap] Configurando CORS para: ${frontendUrl}`);
+  
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:4200',
+    origin: frontendUrl,
     // Necesario para que el navegador acepte y envíe cookies en peticiones Angular.
     credentials: true,
   });
