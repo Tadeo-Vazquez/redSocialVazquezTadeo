@@ -46,7 +46,7 @@ $ npm run start:prod
 
 ## Authentication configuration
 
-Set `JWT_SECRET` in the backend environment to a long, random secret before starting the application. Login and registration issue a 15-minute JWT in an `HttpOnly`, `SameSite=Lax` cookie; the `Secure` flag is enabled in production. The token is not included in the JSON response.
+Set `JWT_SECRET` in the backend environment to a long, random secret before starting the application. Login and registration issue an `HttpOnly` cookie whose lifetime matches the JWT (`AUTH_TOKEN_TTL_MINUTES`). With `NODE_ENV=production` the cookie uses `SameSite=None; Secure` for cross-site HTTPS deployments; otherwise it uses `SameSite=Lax` without `Secure` for local HTTP development. In local development, use the same hostname for frontend and backend (for example `localhost`, not a mix of `localhost` and `127.0.0.1`) and allow the frontend origin with `FRONTEND_URL`. The token is not included in the JSON response.
 
 `POST /auth/autorizar` validates the session cookie and returns the current user; `POST /auth/refrescar` renews it while it is still valid. The `/autorizar` and `/refrescar` paths are also available to match the sprint specification. JWT claims include the user identifier (`sub`), `username`, and `rol`.
 

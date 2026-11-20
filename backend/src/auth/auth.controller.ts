@@ -9,7 +9,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { CookieOptions, Response } from 'express';
 import { RegisterDto } from './dtos/register.dto.js';
 import { LoginDto } from './dtos/login.dto.js';
 import { AuthService } from './auth.service.js';
@@ -89,29 +89,26 @@ export class AuthController {
     // Usamos la misma ruta y opciones de seguridad que al crear la cookie.
     // Esto elimina la cookie del navegador, pero no revoca otras copias del JWT:
     // estas siguen siendo válidas hasta su vencimiento.
-    response.clearCookie('access_token', {
+    response.clearCookie('access_token', this.authCookieOptions());
+  }
+
+  private authCookieOptions(): CookieOptions {
+    const production = process.env.NODE_ENV === 'production';
+    return {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      secure: production,
+      sameSite: production ? 'none' : 'lax',
       path: '/',
-    });
+    };
   }
 
   private setAuthCookie(response: Response | undefined, accessToken: string): void {
     // HttpOnly impide que JavaScript lea el JWT; el navegador lo adjunta solo
     // en las solicitudes que coincidan con el dominio y la ruta de esta cookie.
     response?.cookie('access_token', accessToken, {
-      httpOnly: true,
-      // En producción obliga a transportar la cookie por HTTPS; en desarrollo
-      // local permite probar HTTP sin configurar certificados.
-      secure: process.env.NODE_ENV === 'production',
-      // None permite que la cookie se envíe en peticiones cross-site (Vercel a Render).
-      // Requiere secure: true en producción.
-      sameSite: 'none',
+      ...this.authCookieOptions(),
       // Express recibe maxAge en milisegundos; la constante compartida está en minutos.
       maxAge: AUTH_TOKEN_TTL_MINUTES * 60 * 1000,
-      // Hace que la cookie esté disponible para las rutas de autenticación y API.
-      path: '/',
     });
   }
 }
