@@ -34,13 +34,15 @@ export class UnauthorizedInterceptor implements HttpInterceptor {
           // Borra el perfil guardado localmente.
           this.session.clear();
 
-          // Muestra un mensaje informativo.
-          this.snackBar.open('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'Cerrar', {
-            duration: 5000,
-            horizontalPosition: 'center',
-            verticalPosition: 'top',
-            panelClass: ['error-snackbar'],
-          });
+          // Muestra un mensaje informativo solo si no estamos ya en login.
+          if (!this.router.url.includes('/login')) {
+            this.snackBar.open('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'Cerrar', {
+              duration: 5000,
+              horizontalPosition: 'center',
+              verticalPosition: 'top',
+              panelClass: ['error-snackbar'],
+            });
+          }
 
           // Redirige al login.
           void this.router.navigate(['/login']);

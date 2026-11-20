@@ -19,9 +19,9 @@ import { Auth } from '../../services/auth';
         <p>¿Quieres continuar usando la aplicación?</p>
       </mat-dialog-content>
       <mat-dialog-actions>
-        <button (click)="close()" class="cancel-button">Cerrar sesión</button>
+        <button (click)="close()" class="cancel-button">No extender</button>
         <button (click)="extend()" class="extend-button" [disabled]="isExtending">
-          {{ isExtending ? 'Extendiendo...' : 'Extender sesión' }}
+          {{ isExtending ? 'Extendiendo...' : 'Si, extender sesión' }}
         </button>
       </mat-dialog-actions>
     </div>
@@ -99,10 +99,21 @@ export class SessionWarningDialog {
   isExtending = false;
 
   /**
-   * Cierra el modal sin extender la sesión.
+   * Cierra la sesión llamando a /auth/logout y cierra el modal.
    */
   close(): void {
-    this.dialogRef.close(false);
+    console.log('[SessionWarningDialog] Usuario eligió cerrar sesión.');
+    this.auth.logout().subscribe({
+      next: () => {
+        console.log('[SessionWarningDialog] Sesión cerrada correctamente.');
+        this.dialogRef.close(false);
+      },
+      error: (error) => {
+        console.error('[SessionWarningDialog] Error al cerrar sesión:', error);
+        // Cierra el modal de todas formas para que el usuario sea redirigido al login.
+        this.dialogRef.close(false);
+      },
+    });
   }
 
   /**
