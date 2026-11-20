@@ -19,12 +19,17 @@ import { ListPostsDto } from './dtos/list-posts.dto.js';
 import { UserActionDto } from './dtos/user-action.dto.js';
 import { ParseMongoIdPipe } from '../utils/pipes/parse-mongo-id.pipe.js';
 import type { Types } from 'mongoose';
+import { AccessToken } from '../auth/decorators/access-token.decorator.js';
+import { AuthService } from '../auth/auth.service.js';
 
 @Controller('posts')
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly authService: AuthService,
+  ) {}
 
   // POST /posts: recibe los datos validados y una imagen opcional.
   @Post()
@@ -63,10 +68,10 @@ export class PostsController {
   @HttpCode(HttpStatus.OK)
   async remove(
     @Param('id', ParseMongoIdPipe) id: Types.ObjectId,
-    @Query('usuarioId') usuarioIdQuery: string,
-    @Body() dto: Partial<UserActionDto>,
+    @AccessToken() accessToken: string | undefined,
   ) {
-    const usuarioId = usuarioIdQuery ?? dto?.usuarioId;
+    const { user } = await this.authService.authorize(accessToken);
+    const usuarioId = user._id.toString();
     this.logger.log(
       `DELETE /posts/${id.toString()} - Solicitud del usuario ${usuarioId ?? 'desconocido'}`,
     );

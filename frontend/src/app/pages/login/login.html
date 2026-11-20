@@ -61,6 +61,8 @@
       <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
         <div class="field">
           <label for="loginInput">Usuario o correo electrónico</label>
+          <!-- appAutofocus se aplica como atributo: al aparecer el formulario
+               enfoca este campo, salvo que el usuario ya haya elegido otro. -->
           <input
             id="loginInput"
             type="text"
@@ -68,10 +70,8 @@
             autocomplete="username"
             maxlength="254"
             placeholder="usuario o correo"
-            [class.input-error]="
-              loginForm.controls.loginInput.touched &&
-              loginForm.controls.loginInput.invalid
-            "
+            appAutofocus
+            [attr.aria-invalid]="loginForm.controls.loginInput.touched && loginForm.controls.loginInput.invalid"
           />
           @if (
             loginForm.controls.loginInput.touched &&
@@ -90,10 +90,7 @@
               formControlName="password"
               autocomplete="current-password"
               placeholder="Tu contraseña"
-              [class.input-error]="
-                loginForm.controls.password.touched &&
-                loginForm.controls.password.invalid
-              "
+              [attr.aria-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
             />
             <button
               class="password-toggle"

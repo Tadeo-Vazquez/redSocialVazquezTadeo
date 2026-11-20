@@ -22,5 +22,6 @@ import { UsersModule } from '../users/users.module.js';
   ],
   providers: [AuthService],
   controllers: [AuthController],
+  exports: [AuthService],
 })
 export class AuthModule {}

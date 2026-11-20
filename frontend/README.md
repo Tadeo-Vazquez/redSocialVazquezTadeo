@@ -13,6 +13,17 @@ ejemplo, `localhost` en ambos, sin mezclarlo con `127.0.0.1`) y el origen del
 frontend debe estar permitido por `FRONTEND_URL` en el backend. En producción,
 la cookie permite peticiones entre sitios y requiere HTTPS.
 
+## Directivas y pipes propios
+
+El inicio de sesión usa `appAutofocus` para enfocar el primer campo y
+`appHighlightError` para resaltar errores de validación. Las tarjetas aplican
+`appDebounceClick` al botón de me gusta para ignorar clics repetidos breves.
+`truncateText` limita la vista previa de la descripción; en el detalle se
+mantiene el texto completo. `escapeHtml` convierte el contenido ingresado por
+usuarios en texto para mostrarlo con `[innerHTML]` sin omitir la sanitización
+de Angular. Para interpolaciones normales (`{{ ... }}`), Angular ya escapa el
+contenido automáticamente.
+
 ## Development server
 
 To start a local development server, run:

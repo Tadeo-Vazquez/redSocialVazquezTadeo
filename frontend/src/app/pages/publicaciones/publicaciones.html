@@ -80,10 +80,11 @@
           <app-publicacion-card
             [post]="post"
             [currentUserId]="currentUserId"
+            [isAdministrator]="currentUser?.perfil === 'administrador'"
             [actionPending]="pendingPostIds.has(post._id)"
             [deletePending]="deletingPostIds.has(post._id)"
             (likeRequested)="toggleLike($event)"
-            (deleteRequested)="deletePost($event)"
+            (deleteRequested)="confirmDeletePost($event)"
           />
         }
       </div>

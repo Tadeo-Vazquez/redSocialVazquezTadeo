@@ -1,9 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 /**
- * Trunca un texto a una longitud máxima y añade puntos suspensivos.
+ * Conserva hasta maxLength caracteres del texto y añade puntos si se recorta.
  * Útil para descripciones, títulos u otros campos de longitud variable.
- * Ejemplo: "Este es un texto muy largo" | truncateText:15 → "Este es un te..."
+ * Ejemplo: "Una descripción extensa" | truncateText:8 → "Una desc..."
  */
 @Pipe({
   name: 'truncateText',
@@ -15,12 +15,15 @@ export class TruncateTextPipe implements PipeTransform {
       return '';
     }
 
-    // Si el texto es más corto que el máximo, se devuelve sin cambios.
-    if (value.length <= maxLength) {
+    // Array.from separa por puntos de código para no cortar un emoji en medio
+    // de su par sustituto UTF-16.
+    const characters = Array.from(value);
+    if (characters.length <= maxLength) {
       return value;
     }
 
-    // Corta al máximo y añade puntos suspensivos.
-    return value.substring(0, maxLength).trim() + '...';
+    // Los puntos indican que la tarjeta muestra solo una vista previa. La
+    // publicación original permanece intacta para consultarla en detalle.
+    return characters.slice(0, Math.max(0, maxLength)).join('').trim() + '...';
   }
 }

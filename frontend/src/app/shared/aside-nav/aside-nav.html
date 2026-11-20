@@ -11,15 +11,17 @@
         </svg>
         <span>Dashboard</span>
       </a>
-    } @else {
-      <a routerLink="/publicaciones" routerLinkActive="active" aria-label="Publicaciones">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 6h16v12H4z" />
-          <path d="M8 10h8M8 14h5" />
-        </svg>
-        <span>Publicaciones</span>
-      </a>
-      
+    }
+
+    <a routerLink="/publicaciones" routerLinkActive="active" aria-label="Publicaciones">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h16v12H4z" />
+        <path d="M8 10h8M8 14h5" />
+      </svg>
+      <span>Publicaciones</span>
+    </a>
+
+    @if (currentUser?.['perfil'] !== 'administrador') {
       <a routerLink="/publicar" routerLinkActive="active" aria-label="Crear publicación">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 5v14M5 12h14" />

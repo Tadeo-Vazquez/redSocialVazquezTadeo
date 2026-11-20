@@ -1,42 +1,28 @@
-import { Directive, ElementRef, Input, OnInit } from '@angular/core';
+import { Directive, HostBinding, Input } from '@angular/core';
 
 /**
- * Resalta el elemento con un color rojo si su contenedor está en error.
- * Útil para campos de formulario que fallan la validación.
- * Uso: <input appHighlightError [error]="control.hasError('required')" />
+ * Aplica la clase de error del formulario y comunica el estado a lectores de pantalla.
+ * Uso: <input [appHighlightError]="control.touched && control.invalid" />
  */
 @Directive({
   selector: '[appHighlightError]',
   standalone: true,
 })
-export class HighlightErrorDirective implements OnInit {
-  // Si es true, el elemento se resalta como error.
+export class HighlightErrorDirective {
+  // El componente decide cuándo mostrar el error; por ejemplo, después de que
+  // el usuario toque el control. Angular actualiza este valor al cambiar el formulario.
   @Input('appHighlightError') error = false;
-  // Color personalizado; por defecto es rojo.
-  @Input() errorColor = '#dc2626';
 
-  constructor(private elementRef: ElementRef<HTMLElement>) {}
-
-  ngOnInit(): void {
-    this.updateStyles();
+  // HostBinding aplica la clase al propio input. El CSS de cada formulario
+  // define su apariencia sin sobrescribir estilos de foco ni valores originales.
+  @HostBinding('class.input-error')
+  get hasError(): boolean {
+    return this.error;
   }
 
-  ngOnChanges(): void {
-    this.updateStyles();
-  }
-
-  private updateStyles(): void {
-    const element = this.elementRef.nativeElement;
-    if (this.error) {
-      // Aplica un borde rojo y cambio de fondo leve.
-      element.style.borderColor = this.errorColor;
-      element.style.borderWidth = '2px';
-      element.style.backgroundColor = `${this.errorColor}10`; // 10% de opacidad
-    } else {
-      // Restaura los estilos por defecto.
-      element.style.borderColor = '';
-      element.style.borderWidth = '';
-      element.style.backgroundColor = '';
-    }
+  // aria-invalid permite reconocer el error aunque no se perciba el color.
+  @HostBinding('attr.aria-invalid')
+  get ariaInvalid(): 'true' | null {
+    return this.error ? 'true' : null;
   }
 }

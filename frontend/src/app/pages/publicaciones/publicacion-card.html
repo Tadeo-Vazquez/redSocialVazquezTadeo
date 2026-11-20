@@ -17,6 +17,8 @@
     <div class="author-details">
       <span class="author-name">{{ authorName }}</span>
       @if (post.createdAt) {
+        <!-- timeAgo recibe la fecha original y la presenta como tiempo relativo;
+             datetime conserva la fecha original para lectores y navegadores. -->
         <time [attr.datetime]="post.createdAt">{{ post.createdAt | timeAgo }}</time>
       }
     </div>
@@ -34,7 +36,7 @@
       </div>
     }
 
-    @if (isOwnPost && showOwnerActions) {
+    @if ((isOwnPost || isAdministrator) && showOwnerActions) {
       <button
         class="delete-post-button"
         type="button"
@@ -51,13 +53,17 @@
   <div class="post-content">
     <div class="post-meta">
       @if (currentUserId) {
+        <!-- appDebounceClick escucha los clics y emite debounceClick solo para
+             el primero de cada intervalo; ese evento solicita alternar el like.
+             disabled también bloquea el botón mientras la petición está pendiente. -->
         <button
           class="like-toggle"
           type="button"
           [disabled]="actionPending"
           [attr.aria-label]="(hasLiked ? 'Quitar me gusta' : 'Me gusta') + '. ' + likesCount + ' me gusta'"
           [attr.title]="hasLiked ? 'Quitar me gusta' : 'Me gusta'"
-          (click)="likeRequested.emit(post)"
+          appDebounceClick
+          (debounceClick)="likeRequested.emit(post)"
         >
           <img [src]="hasLiked ? '/like.png' : '/unlike.png'" alt="" aria-hidden="true" />
         </button>
@@ -76,6 +82,14 @@
 
     <p class="likes-summary">{{ likesCount }} Me gusta</p>
     <h2>{{ post.titulo }}</h2>
-    <p class="post-description">{{ post.descripcion }}</p>
+    <!-- El pipe truncateText recibe la descripción y el límite 200 para la
+         vista previa; con showFullContent se conserva el texto completo.
+         Luego escapeHtml convierte el texto en entidades antes de [innerHTML]:
+         las etiquetas escritas por el usuario se muestran como texto y Angular
+         mantiene activa su sanitización. -->
+    <p
+      class="post-description"
+      [innerHTML]="(showFullContent ? post.descripcion : (post.descripcion | truncateText:200)) | escapeHtml"
+    ></p>
   </div>
 </article>

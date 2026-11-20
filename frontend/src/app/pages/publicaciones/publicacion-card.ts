@@ -2,9 +2,12 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
 import { Post } from '../../services/posts';
+import { EscapeHtmlPipe } from '../../pipes/escape-html.pipe';
+import { DebounceClickDirective } from '../../directives/debounce-click.directive';
+import { TruncateTextPipe } from '../../pipes/truncate-text.pipe';
 
 @Component({
-  imports: [TimeAgoPipe, RouterLink],
+  imports: [TimeAgoPipe, RouterLink, DebounceClickDirective, EscapeHtmlPipe, TruncateTextPipe],
   selector: 'app-publicacion-card',
   styleUrl: './publicacion-card.scss',
   templateUrl: './publicacion-card.html',
@@ -16,6 +19,7 @@ export class PublicacionCard {
   @Input() currentUserId = '';
   @Input() actionPending = false;
   @Input() showOwnerActions = true;
+  @Input() isAdministrator = false;
   @Input() deletePending = false;
   @Input() showCommentsAction = false;
   @Input() showFullContent = false;

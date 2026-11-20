@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { finalize, timeout } from 'rxjs';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
+import { EscapeHtmlPipe } from '../../pipes/escape-html.pipe';
 import { Post, Posts } from '../../services/posts';
 import { PostLikes } from '../../services/post-likes';
 import { Session } from '../../services/session';
@@ -11,7 +12,7 @@ import { CommentsAside } from '../../shared/comments-aside/comments-aside';
 import { PublicacionImageDialog } from './image-dialog/publicacion-image-dialog';
 
 @Component({
-  imports: [AsideNav, CommentsAside, TimeAgoPipe, MatDialogModule, RouterLink],
+  imports: [AsideNav, CommentsAside, TimeAgoPipe, EscapeHtmlPipe, MatDialogModule, RouterLink],
   selector: 'app-publicacion-detalle',
   styleUrl: './publicacion-detalle.scss',
   templateUrl: './publicacion-detalle.html',

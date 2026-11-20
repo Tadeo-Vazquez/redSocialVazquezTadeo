@@ -55,6 +55,8 @@
             <div class="author-details">
               <strong>{{ authorName }}</strong>
               @if (post.createdAt) {
+                <!-- timeAgo transforma la fecha en un texto relativo, mientras
+                     datetime mantiene el valor original de la publicación. -->
                 <time [attr.datetime]="post.createdAt">{{ post.createdAt | timeAgo }}</time>
               }
             </div>
@@ -62,7 +64,10 @@
 
           <div class="detail-copy">
             <h2>{{ post.titulo }}</h2>
-            <p>{{ post.descripcion }}</p>
+            <!-- escapeHtml convierte el contenido ingresado por el usuario en
+                 texto antes de [innerHTML]. Aquí no se trunca la descripción;
+                 Angular sigue sanitizando el resultado. -->
+            <p [innerHTML]="post.descripcion | escapeHtml"></p>
           </div>
 
           <div class="detail-likes">

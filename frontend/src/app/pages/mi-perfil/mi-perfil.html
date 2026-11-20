@@ -23,6 +23,8 @@
         @if (currentUser.fechaNacimiento) {
           <p>
             <strong>Fecha de nacimiento:</strong>
+            <!-- formatoFecha recibe la fecha de la sesión y la muestra en
+                 formato día/mes/año sin modificar el dato guardado. -->
             {{ currentUser.fechaNacimiento | formatoFecha }}
           </p>
         }

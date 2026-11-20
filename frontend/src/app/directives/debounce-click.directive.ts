@@ -1,35 +1,42 @@
-import { Directive, HostListener, Input, Output, EventEmitter } from '@angular/core';
+import { Directive, HostListener, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
 
 /**
  * Evita enviar múltiples peticiones si se hace clic repetido en un botón.
- * Desactiva el elemento por un tiempo tras el primer clic.
+ * Emite el primer clic y descarta los siguientes durante un intervalo breve.
  * Uso: <button appDebounceClick (debounceClick)="submit()">Enviar</button>
  */
 @Directive({
   selector: '[appDebounceClick]',
   standalone: true,
 })
-export class DebounceClickDirective {
-  // El tiempo en milisegundos que se desactiva el elemento tras un clic.
+export class DebounceClickDirective implements OnDestroy {
+  // El intervalo se puede configurar desde la plantilla en milisegundos.
   @Input() debounceTime = 500;
   @Output() debounceClick = new EventEmitter<MouseEvent>();
 
-  private isDisabled = false;
+  private waiting = false;
+  private timer?: ReturnType<typeof setTimeout>;
 
+  // HostListener escucha el clic del elemento que lleva la directiva. El
+  // componente debe suscribirse a debounceClick, no al evento click original.
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent): void {
-    // Si ya está desactivado, ignora el evento.
-    if (this.isDisabled) {
+    if (this.waiting) {
       event.preventDefault();
       return;
     }
 
-    this.isDisabled = true;
-    this.debounceClick.emit(event);
-
-    // Después del tiempo especificado, permite nuevos clics.
-    setTimeout(() => {
-      this.isDisabled = false;
+    // Se bloquea y programa la liberación antes de emitir: el receptor podría
+    // destruir la vista durante el evento y ngOnDestroy debe poder cancelar el timer.
+    this.waiting = true;
+    this.timer = setTimeout(() => {
+      this.waiting = false;
     }, this.debounceTime);
+    this.debounceClick.emit(event);
+  }
+
+  ngOnDestroy(): void {
+    // Evita conservar un temporizador cuando se elimina la tarjeta de la vista.
+    clearTimeout(this.timer);
   }
 }

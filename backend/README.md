@@ -50,6 +50,8 @@ Set `JWT_SECRET` in the backend environment to a long, random secret before star
 
 `POST /auth/autorizar` validates the session cookie and returns the current user; `POST /auth/refrescar` renews it while it is still valid. The `/autorizar` and `/refrescar` paths are also available to match the sprint specification. JWT claims include the user identifier (`sub`), `username`, and `rol`.
 
+`DELETE /posts/:id` requires a valid session cookie. The authenticated author or an active administrator can logically delete a post; the post and its comments are then hidden. The endpoint does not use a client-supplied user ID to determine permissions.
+
 ## API de comentarios
 
 Los comentarios forman parte de Publicaciones y usan rutas anidadas para identificar la publicación en cada acción:

@@ -1,9 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 /**
- * Escapa caracteres HTML para evitar inyecciones y renderiza el contenido sin riesgo.
- * Útil cuando se muestran datos ingresados por usuarios sin interpretar etiquetas HTML.
+ * Convierte caracteres especiales en entidades para mostrar texto en [innerHTML]
+ * sin interpretar las etiquetas que escribió el usuario.
  * Ejemplo: "<script>alert('xss')</script>" → "&lt;script&gt;alert('xss')&lt;/script&gt;"
  */
 @Pipe({
@@ -11,19 +10,19 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   standalone: true,
 })
 export class EscapeHtmlPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer) {}
-
-  transform(value: string | null | undefined): SafeHtml {
-    if (!value || typeof value !== 'string') {
+  transform(value: string | null | undefined): string {
+    if (value == null) {
       return '';
     }
 
-    // Crea un div temporal para aprovechar el comportamiento de escape del navegador.
-    const textArea = document.createElement('textarea');
-    textArea.textContent = value;
-    const escaped = textArea.innerHTML;
-
-    // Devuelve el HTML escapado de forma segura para Angular.
-    return this.sanitizer.bypassSecurityTrustHtml(escaped);
+    // Escapar primero & evita que una entidad escrita por el usuario se
+    // interprete como marcado. Se devuelve un string normal, por lo que Angular
+    // todavía aplica su sanitización al asignarlo a [innerHTML].
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 }

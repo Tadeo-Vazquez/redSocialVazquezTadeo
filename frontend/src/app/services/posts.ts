@@ -98,9 +98,8 @@ export class Posts {
     );
   }
 
-  deletePost(postId: string, usuarioId: string): Observable<unknown> {
-    const params = new HttpParams().set('usuarioId', usuarioId);
-    return this.http.delete(`${this.apiUrl}/${postId}`, { params });
+  deletePost(postId: string): Observable<unknown> {
+    return this.http.delete(`${this.apiUrl}/${postId}`);
   }
 }
 

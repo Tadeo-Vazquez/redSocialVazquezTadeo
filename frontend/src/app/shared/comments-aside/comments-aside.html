@@ -69,6 +69,8 @@
                 <div class="comment-heading">
                   <strong>{{ authorName(comment) }}</strong>
                   @if (comment.createdAt) {
+                    <!-- timeAgo muestra cuánto tiempo pasó desde la creación;
+                         datetime conserva la fecha original del comentario. -->
                     <time [attr.datetime]="comment.createdAt">{{ comment.createdAt | timeAgo }}</time>
                   }
                 </div>
