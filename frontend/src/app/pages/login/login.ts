@@ -6,10 +6,9 @@ import { Auth } from '../../services/auth';
 import { Session } from '../../services/session';
 import { SessionTimer } from '../../services/session-timer';
 import { AutofocusDirective } from '../../directives/autofocus.directive';
-import { HighlightErrorDirective } from '../../directives/highlight-error.directive';
 
 @Component({
-  imports: [ReactiveFormsModule, RouterLink, AutofocusDirective, HighlightErrorDirective],
+  imports: [ReactiveFormsModule, RouterLink, AutofocusDirective],
   selector: 'app-login',
   styleUrl: './login.scss',
   templateUrl: './login.html',

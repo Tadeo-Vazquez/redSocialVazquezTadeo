@@ -10,11 +10,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { HighlightErrorDirective } from '../../directives/highlight-error.directive';
 import { Auth } from '../../services/auth';
 import { SessionTimer } from '../../services/session-timer';
 
 @Component({
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, HighlightErrorDirective],
   selector: 'app-registro',
   styleUrl: './registro.scss',
   templateUrl: './registro.html',
