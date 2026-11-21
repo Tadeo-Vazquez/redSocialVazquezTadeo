@@ -13,6 +13,13 @@ ejemplo, `localhost` en ambos, sin mezclarlo con `127.0.0.1`) y el origen del
 frontend debe estar permitido por `FRONTEND_URL` en el backend. En producción,
 la cookie permite peticiones entre sitios y requiere HTTPS.
 
+## PWA
+
+FrontEo se puede instalar desde una compilación de producción servida por HTTPS
+o localhost. El service worker guarda los archivos de la aplicación y sus
+íconos, pero no almacena respuestas de la API: iniciar sesión y consultar
+publicaciones requieren conexión. En desarrollo con `ng serve` está desactivado.
+
 ## Directivas y pipes propios
 
 El inicio de sesión usa `appAutofocus` para enfocar el primer campo y

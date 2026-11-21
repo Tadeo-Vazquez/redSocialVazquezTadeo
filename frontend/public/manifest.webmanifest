@@ -1,6 +1,10 @@
 {
-  "name": "frontend",
-  "short_name": "frontend",
+  "name": "FrontEo",
+  "short_name": "FrontEo",
+  "description": "Comparte momentos, descubre personas y mantente conectado.",
+  "lang": "es",
+  "theme_color": "#0f0e1a",
+  "background_color": "#0f0e1a",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
