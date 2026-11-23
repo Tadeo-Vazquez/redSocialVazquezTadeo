@@ -174,10 +174,10 @@ export class StatisticsService {
     if (
       lowerBound !== undefined &&
       upperBound !== undefined &&
-      lowerBound >= upperBound
+      (filter.$lt ? lowerBound >= upperBound : lowerBound > upperBound)
     ) {
       throw new BadRequestException(
-        'El parámetro from debe ser anterior al límite superior de to.',
+        'La fecha de inicio no puede ser posterior a la fecha de fin.',
       );
     }
 

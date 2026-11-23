@@ -2,10 +2,16 @@ import { IsDateString, IsOptional } from 'class-validator';
 
 export class StatisticsRangeDto {
   @IsOptional()
-  @IsDateString({}, { message: 'from debe ser una fecha ISO-8601 válida.' })
+  @IsDateString(
+    { strict: true },
+    { message: 'La fecha de inicio no es válida.' },
+  )
   from?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'to debe ser una fecha ISO-8601 válida.' })
+  @IsDateString(
+    { strict: true },
+    { message: 'La fecha de fin no es válida.' },
+  )
   to?: string;
 }

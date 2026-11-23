@@ -158,10 +158,34 @@
 }
 
 .author-details {
+  flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.delete-post-button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  border: 1px solid rgba(255, 110, 125, 0.6);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: rgba(220, 38, 38, 0.14);
+  color: #ff9aa8;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-post-button:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.28);
+}
+
+.delete-post-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .author-details strong {
@@ -294,6 +318,16 @@
 @media (max-width: 960px) {
   .detail-layout {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (max-width: 400px) {
+    .detail-author {
+      flex-wrap: wrap;
+    }
+
+    .delete-post-button {
+      margin-left: auto;
+    }
   }
 
   .detail-info-column {

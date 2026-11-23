@@ -57,7 +57,7 @@ describe('Permisos de publicaciones', () => {
     expect(overlay.textContent).toContain('Ajena');
     http.expectNone(`${API_URL}/posts/ajena`);
     const closed = firstValueFrom(TestBed.inject(MatDialog).openDialogs[0].afterClosed());
-    const confirmButton: HTMLButtonElement = overlay.querySelector('.delete-button')!;
+    const confirmButton: HTMLButtonElement = overlay.querySelector('.confirm-button')!;
     confirmButton.click();
     await closed;
     const deletion = http.expectOne(`${API_URL}/posts/ajena`);
@@ -110,7 +110,7 @@ describe('Permisos de publicaciones', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const closed = firstValueFrom(TestBed.inject(MatDialog).openDialogs[0].afterClosed());
-    const confirmButton: HTMLButtonElement = overlay.querySelector('.delete-button')!;
+    const confirmButton: HTMLButtonElement = overlay.querySelector('.confirm-button')!;
     confirmButton.click();
     await closed;
     http.expectOne(`${API_URL}/posts/propia`).flush(

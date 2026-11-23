@@ -232,8 +232,42 @@
           Elegí un rango para los tres gráficos. Sin fechas se muestra toda la actividad visible.
         </p>
         <form class="range-form" [formGroup]="rangeForm" (ngSubmit)="loadStatistics()">
-          <label>Desde<input type="date" formControlName="from" /></label>
-          <label>Hasta<input type="date" formControlName="to" /></label>
+          <label>
+            Desde
+            <input
+              #fromDate
+              type="date"
+              min="0001-01-01"
+              max="9999-12-31"
+              formControlName="from"
+              (input)="onRangeDateInput('from', fromDate)"
+              (change)="onRangeDateInput('from', fromDate)"
+              (blur)="onRangeDateInput('from', fromDate)"
+              [attr.aria-invalid]="rangeForm.controls.from.touched && (rangeForm.controls.from.invalid || invalidDateInputs.from) ? 'true' : null"
+              [attr.aria-describedby]="rangeForm.controls.from.touched && (rangeForm.controls.from.invalid || invalidDateInputs.from) ? 'from-date-error' : null"
+            />
+            @if (rangeForm.controls.from.touched && (rangeForm.controls.from.invalid || invalidDateInputs.from)) {
+              <span class="field-error" id="from-date-error">Ingresá una fecha de inicio válida.</span>
+            }
+          </label>
+          <label>
+            Hasta
+            <input
+              #toDate
+              type="date"
+              min="0001-01-01"
+              max="9999-12-31"
+              formControlName="to"
+              (input)="onRangeDateInput('to', toDate)"
+              (change)="onRangeDateInput('to', toDate)"
+              (blur)="onRangeDateInput('to', toDate)"
+              [attr.aria-invalid]="rangeForm.controls.to.touched && (rangeForm.controls.to.invalid || invalidDateInputs.to) ? 'true' : null"
+              [attr.aria-describedby]="rangeForm.controls.to.touched && (rangeForm.controls.to.invalid || invalidDateInputs.to) ? 'to-date-error' : null"
+            />
+            @if (rangeForm.controls.to.touched && (rangeForm.controls.to.invalid || invalidDateInputs.to)) {
+              <span class="field-error" id="to-date-error">Ingresá una fecha de fin válida.</span>
+            }
+          </label>
           <button class="primary-button" type="submit" [disabled]="loadingStatistics">
             Aplicar rango
           </button>

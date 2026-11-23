@@ -66,7 +66,7 @@ Las estadísticas también requieren rol administrador:
 - `GET /statistics/comments`: total de comentarios asociados a publicaciones activas.
 - `GET /statistics/comments-per-post`: comentarios activos por publicación.
 
-Los tres endpoints aceptan `from` y `to` opcionales como fechas ISO-8601. Para valores `YYYY-MM-DD`, el rango incluye el día completo de ambos extremos; para timestamps se usan los límites exactos enviados.
+Los tres endpoints aceptan `from` y `to` opcionales como fechas ISO-8601. Para valores `YYYY-MM-DD`, el rango incluye el día completo de ambos extremos; para timestamps se usan los límites exactos enviados. Las fechas deben existir en el calendario y el inicio no puede ser posterior al fin. Si el rango es inválido, la respuesta indica el problema en español.
 
 ## API de comentarios
 

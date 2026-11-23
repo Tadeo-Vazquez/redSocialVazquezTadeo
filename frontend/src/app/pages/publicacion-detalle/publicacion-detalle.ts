@@ -1,5 +1,6 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { finalize, timeout } from 'rxjs';
 import { TimeAgoPipe } from '../../pipes/time-ago.pipe';
@@ -9,6 +10,7 @@ import { PostLikes } from '../../services/post-likes';
 import { Session } from '../../services/session';
 import { AsideNav } from '../../shared/aside-nav/aside-nav';
 import { CommentsAside } from '../../shared/comments-aside/comments-aside';
+import { ConfirmDialog, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog';
 import { PublicacionImageDialog } from './image-dialog/publicacion-image-dialog';
 
 @Component({
@@ -24,11 +26,14 @@ import { PublicacionImageDialog } from './image-dialog/publicacion-image-dialog'
  */
 export class PublicacionDetalle implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly postsService = inject(Posts);
   private readonly session = inject(Session);
   private readonly postLikes = inject(PostLikes);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+  private confirmationOpen = false;
 
   // Se conserva el usuario de sesión para identificar sus "me gusta" y enviar su ID al API.
   readonly currentUser = this.session.getCurrentUser();
@@ -36,6 +41,7 @@ export class PublicacionDetalle implements OnInit {
   post: Post | null = null;
   isLoading = true;
   isLikePending = false;
+  isDeletePending = false;
   loadError = '';
   actionError = '';
 
@@ -95,6 +101,58 @@ export class PublicacionDetalle implements OnInit {
     if (!this.isLoading) {
       this.loadPost();
     }
+  }
+
+  /** El modal solo devuelve la decisión; esta vista decide si envía la baja. */
+  confirmDeletePost(): void {
+    const post = this.post;
+    // El control de rol limita la interfaz; el backend verifica la autorización real.
+    if (!post || this.currentUser?.perfil !== 'administrador' || this.isDeletePending || this.confirmationOpen) {
+      return;
+    }
+
+    this.confirmationOpen = true;
+    this.dialog.open<ConfirmDialog, ConfirmDialogData, boolean>(ConfirmDialog, {
+      data: {
+        title: '¿Eliminar publicación?',
+        message: `Se ocultará la publicación "${post.titulo}" y sus comentarios.`,
+        confirmLabel: 'Eliminar',
+        destructive: true,
+      },
+      width: '420px',
+      maxWidth: '90vw',
+      role: 'alertdialog',
+      autoFocus: 'first-tabbable',
+    }).afterClosed().pipe(
+      // Al abandonar la pantalla no debe ejecutarse una decisión tardía del modal.
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((confirmed) => {
+      this.confirmationOpen = false;
+      if (confirmed === true) {
+        this.deletePost(post);
+      }
+    });
+  }
+
+  private deletePost(post: Post): void {
+    this.isDeletePending = true;
+    this.actionError = '';
+    this.changeDetectorRef.markForCheck();
+    this.postsService.deletePost(post._id).pipe(
+      timeout(10000),
+      takeUntilDestroyed(this.destroyRef),
+      // Se libera el botón tanto si la API falla como si vence el tiempo de espera.
+      finalize(() => {
+        this.isDeletePending = false;
+        this.changeDetectorRef.markForCheck();
+      }),
+    ).subscribe({
+      // La publicación ya no está disponible en detalle: volver al listado.
+      next: () => { void this.router.navigate(['/publicaciones']); },
+      error: () => {
+        this.actionError = 'No se pudo eliminar la publicación. Inténtalo nuevamente.';
+      },
+    });
   }
 
   private loadPost(): void {

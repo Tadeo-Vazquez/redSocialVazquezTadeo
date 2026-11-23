@@ -60,6 +60,16 @@
                 <time [attr.datetime]="post.createdAt">{{ post.createdAt | timeAgo }}</time>
               }
             </div>
+            @if (currentUser?.perfil === 'administrador') {
+              <button
+                class="delete-post-button"
+                type="button"
+                [disabled]="isDeletePending"
+                (click)="confirmDeletePost()"
+              >
+                {{ isDeletePending ? 'Eliminando...' : 'Eliminar publicación' }}
+              </button>
+            }
           </header>
 
           <div class="detail-copy">

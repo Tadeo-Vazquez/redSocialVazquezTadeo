@@ -1,6 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
 import type { Model } from 'mongoose';
 import { vi } from 'vitest';
+import { validate } from 'class-validator';
+import { StatisticsRangeDto } from './dtos/statistics-range.dto.js';
 import type { ComentarioDocumento } from './comentarios/comentarios.schema.js';
 import type { PostDocument } from './posts.schema.js';
 import { StatisticsService } from './statistics.service.js';
@@ -70,7 +71,43 @@ describe('StatisticsService', () => {
   it('rejects inverted date ranges without querying MongoDB', async () => {
     await expect(
       service.commentsPerPost({ from: '2026-03-06', to: '2026-03-05' }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toThrow('La fecha de inicio no puede ser posterior a la fecha de fin.');
     expect(commentAggregate).not.toHaveBeenCalled();
+  });
+
+  it('accepts equal timestamp bounds and includes both endpoints', async () => {
+    await service.postsPerUser({
+      from: '2026-03-01T10:00:00Z',
+      to: '2026-03-01T10:00:00Z',
+    });
+    expect(postModel.aggregate.mock.calls[0][0][0]).toEqual({
+      $match: {
+        isDeleted: false,
+        createdAt: {
+          $gte: new Date('2026-03-01T10:00:00Z'),
+          $lte: new Date('2026-03-01T10:00:00Z'),
+        },
+      },
+    });
+  });
+});
+
+describe('StatisticsRangeDto', () => {
+  it('reports invalid calendar dates in clear Spanish', async () => {
+    const dto = new StatisticsRangeDto();
+    dto.from = '2026-02-29';
+    dto.to = 'fecha inválida';
+    const errors = await validate(dto);
+    expect(errors.map((error) => Object.values(error.constraints ?? {}))).toEqual([
+      ['La fecha de inicio no es válida.'],
+      ['La fecha de fin no es válida.'],
+    ]);
+  });
+
+  it('accepts optional dates and leap days', async () => {
+    const dto = new StatisticsRangeDto();
+    dto.from = '2024-02-29';
+    expect(await validate(dto)).toEqual([]);
+    expect(await validate(new StatisticsRangeDto())).toEqual([]);
   });
 });

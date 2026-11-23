@@ -1,15 +1,40 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AsideNav } from '../../shared/aside-nav/aside-nav';
 import { AdminUser, Users } from '../../services/users';
 import { CommentsPerPost, PostsPerUser, Statistics } from '../../services/statistics';
 import { Session } from '../../services/session';
+import { ConfirmDialog, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog';
+
+function validRangeDate(control: AbstractControl): ValidationErrors | null {
+  const value: unknown = control.value;
+  if (value === '') return null;
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return { invalidDate: true };
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  // La comparación detecta fechas imposibles que JavaScript normaliza, como
+  // el 31 de febrero, sin depender de la zona horaria del navegador.
+  return value.startsWith('0000') ||
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+    ? { invalidDate: true }
+    : null;
+}
 
 @Component({
-  imports: [AsideNav, ReactiveFormsModule],
+  imports: [AsideNav, ReactiveFormsModule, MatDialogModule],
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss',
@@ -28,6 +53,8 @@ export class AdminDashboard implements OnInit {
   private readonly session = inject(Session);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
+  private confirmationOpen = false;
 
   // La sesión puede usar _id o id. Este dato solo sirve para identificar la
   // propia cuenta en la interfaz; no determina permisos en el servidor.
@@ -106,9 +133,12 @@ export class AdminDashboard implements OnInit {
   // Los límites opcionales se comparten entre los tres gráficos; un valor vacío
   // significa que no se solicita ese extremo al backend.
   readonly rangeForm = new FormGroup({
-    from: new FormControl('', { nonNullable: true }),
-    to: new FormControl('', { nonNullable: true }),
+    from: new FormControl('', { nonNullable: true, validators: [validRangeDate] }),
+    to: new FormControl('', { nonNullable: true, validators: [validRangeDate] }),
   });
+  // Los navegadores pueden entregar una cadena vacía mientras el usuario
+  // escribe una fecha incompleta; badInput permite distinguirla de un campo vacío.
+  invalidDateInputs = { from: false, to: false };
   loadingStatistics = false;
   statisticsError = '';
   hasStatistics = false;
@@ -267,13 +297,44 @@ export class AdminDashboard implements OnInit {
    * cuentas deshabilitadas o aplica la baja lógica a las habilitadas.
    */
   toggleUser(user: AdminUser): void {
-    if (this.pendingUserIds.has(user._id)) return;
+    if (this.pendingUserIds.has(user._id) || this.confirmationOpen) return;
     const action = user.isDeleted ? 'habilitar' : 'deshabilitar';
     // Si el administrador deshabilita su propia cuenta, el token dejará de
     // autorizar nuevas peticiones; por eso la confirmación lo advierte.
     const warning =
       user._id === this.currentUserId && !user.isDeleted ? ' Tu sesión dejará de ser válida.' : '';
-    if (!window.confirm(`¿Querés ${action} a ${user.username}?${warning}`)) return;
+    // Solo una confirmación puede estar abierta a la vez. Cancelar, usar
+    // Escape o cerrar el diálogo sin confirmar no inicia ninguna petición.
+    this.confirmationOpen = true;
+    // `data` define el texto y el estilo del modal para esta cuenta. No se
+    // envía una función: la acción se decide al recibir el resultado.
+    this.dialog.open<ConfirmDialog, ConfirmDialogData, boolean>(ConfirmDialog, {
+      data: {
+        title: `¿${user.isDeleted ? 'Habilitar' : 'Deshabilitar'} usuario?`,
+        message: `¿Querés ${action} a ${user.username}?${warning}`,
+        confirmLabel: user.isDeleted ? 'Habilitar' : 'Deshabilitar',
+        destructive: !user.isDeleted,
+      },
+      width: '420px',
+      maxWidth: '90vw',
+      role: 'alertdialog',
+      autoFocus: 'first-tabbable',
+    // afterClosed emite true al confirmar, false al cancelar y undefined al
+    // cerrar sin elegir; takeUntilDestroyed evita actuar fuera de este panel.
+    }).afterClosed().pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((confirmed) => {
+      this.confirmationOpen = false;
+      // Este es el punto donde se indica qué hacer al confirmar: pasar el
+      // usuario seleccionado a changeUserStatus. Con false o undefined no
+      // se llama al servicio ni se modifica la cuenta.
+      if (confirmed === true) this.changeUserStatus(user);
+    });
+  }
+
+  private changeUserStatus(user: AdminUser): void {
+    if (this.pendingUserIds.has(user._id)) return;
+    const action = user.isDeleted ? 'habilitar' : 'deshabilitar';
     this.userError = '';
     this.userMessage = '';
     this.pendingUserIds.add(user._id);
@@ -309,8 +370,22 @@ export class AdminDashboard implements OnInit {
    * Solicita las tres métricas usando el rango elegido y reemplaza los datos
    * del panel únicamente cuando se completa la solicitud más reciente.
    */
+  onRangeDateInput(field: 'from' | 'to', input: HTMLInputElement): void {
+    this.invalidDateInputs[field] =
+      input.validity.badInput || input.validity.rangeUnderflow || input.validity.rangeOverflow;
+    this.statisticsError = '';
+  }
+
   loadStatistics(): void {
+    this.rangeForm.markAllAsTouched();
     const { from, to } = this.rangeForm.getRawValue();
+    if (this.rangeForm.invalid || this.invalidDateInputs.from || this.invalidDateInputs.to) {
+      this.statisticsRequestId++;
+      this.loadingStatistics = false;
+      this.hasStatistics = false;
+      this.statisticsError = '';
+      return;
+    }
     // Los inputs de fecha entregan YYYY-MM-DD, formato cuyo orden de texto
     // coincide con el cronológico. Si el rango es inválido, incrementar el ID
     // también impide mostrar una respuesta que aún estuviera en camino.
@@ -318,7 +393,7 @@ export class AdminDashboard implements OnInit {
       this.statisticsRequestId++;
       this.loadingStatistics = false;
       this.hasStatistics = false;
-      this.statisticsError = 'La fecha desde no puede ser posterior a la fecha hasta.';
+      this.statisticsError = 'La fecha de inicio no puede ser posterior a la fecha de fin.';
       return;
     }
     // Cada carga obtiene una identidad propia para descartar respuestas viejas
@@ -349,10 +424,10 @@ export class AdminDashboard implements OnInit {
         error: (error: unknown) => {
           if (requestId !== this.statisticsRequestId) return;
           this.hasStatistics = false;
-          this.statisticsError = this.errorMessage(
-            error,
-            'No se pudieron cargar las estadísticas.',
-          );
+          this.statisticsError =
+            error instanceof HttpErrorResponse && error.status === 403
+              ? 'No tenés permiso para consultar las estadísticas.'
+              : 'No se pudieron cargar las estadísticas. Revisá las fechas e intentá nuevamente.';
           this.changeDetector.markForCheck();
         },
       });

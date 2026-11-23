@@ -15,7 +15,7 @@ import { Session } from '../../services/session';
 import { PostLikes } from '../../services/post-likes';
 import { AsideNav } from '../../shared/aside-nav/aside-nav';
 import { PublicacionCard } from './publicacion-card';
-import { ConfirmarBajaDialog } from './confirmar-baja-dialog';
+import { ConfirmDialog, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   imports: [AsideNav, PublicacionCard, MatDialogModule],
@@ -129,22 +129,32 @@ export class Publicaciones implements OnInit {
     }
 
     this.confirmationOpen = true;
-    // Los tipos indican componente, datos de entrada (título) y resultado
-    // booleano. El foco inicial queda en el primer botón, que es Cancelar.
-    this.dialog.open<ConfirmarBajaDialog, string, boolean>(ConfirmarBajaDialog, {
-      data: post.titulo,
+    // Los tipos indican componente, datos de entrada y resultado booleano.
+    // `data` configura lo que el modal muestra, no la operación a ejecutar.
+    // El foco inicial queda en el primer botón, que es Cancelar.
+    this.dialog.open<ConfirmDialog, ConfirmDialogData, boolean>(ConfirmDialog, {
+      data: {
+        title: '¿Eliminar publicación?',
+        message: `Se ocultará la publicación "${post.titulo}" y sus comentarios.`,
+        confirmLabel: 'Eliminar',
+        destructive: true,
+      },
       width: '420px',
       maxWidth: '90vw',
       role: 'alertdialog',
       autoFocus: 'first-tabbable',
+    // afterClosed devuelve un Observable que emite la decisión al cerrar el
+    // modal: true al confirmar, false al cancelar o undefined al cerrarlo sin
+    // elegir un botón.
     }).afterClosed().pipe(
       // Si se destruye esta vista, no se procesa posteriormente el resultado
       // de un diálogo asociado al componente anterior.
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((confirmed) => {
       this.confirmationOpen = false;
-      // Solo el botón de confirmación devuelve true; cualquier otro cierre
-      // deja intacta la publicación.
+      // La acción se define aquí, no dentro del modal: únicamente si llegó
+      // true se llama a deletePost con la publicación de este diálogo. Cualquier
+      // otro resultado deja intacta la publicación y no envía la petición.
       if (confirmed === true) {
         this.deletePost(post);
       }
