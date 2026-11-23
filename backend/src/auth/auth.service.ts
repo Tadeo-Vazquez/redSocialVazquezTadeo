@@ -63,7 +63,9 @@ export class AuthService {
 
     // Rechaza el registro si el correo ya pertenece a una cuenta activa.
     if (emailExists) {
-      this.logger.warn(`Registro rechazado: el email ${dto.email} ya está registrado`);
+      this.logger.warn(
+        `Registro rechazado: el email ${dto.email} ya está registrado`,
+      );
       throw new ConflictException('El correo electrónico ya está registrado.');
     }
     // Rechaza el registro si el nombre de usuario ya pertenece a una cuenta activa.
@@ -74,7 +76,9 @@ export class AuthService {
       throw new ConflictException('El nombre de usuario ya está registrado.');
     }
 
-    this.logger.log(`Registro: iniciando hasheo de la contraseña para ${dto.email}`);
+    this.logger.log(
+      `Registro: iniciando hasheo de la contraseña para ${dto.email}`,
+    );
     // Convierte la contraseña en un hash seguro antes de almacenarla; 12 define el costo de bcrypt.
     const password = await bcrypt.hash(dto.password, 12);
     this.logger.log(`Registro: contraseña hasheada para ${dto.email}`);
@@ -96,7 +100,9 @@ export class AuthService {
         fechaNacimiento: birthDate,
         descripcionBreve: dto.descripcionBreve,
         avatarUrl: uploadedImage.secure_url,
-        perfil: dto.perfil === 'administrador' ? 'administrador' : 'usuario',
+        // El rol elevado solo puede asignarse desde las rutas protegidas de
+        // administración; el dato opcional enviado en el registro público se ignora.
+        perfil: 'usuario',
         isDeleted: false,
       });
     } catch (error) {
@@ -133,11 +139,11 @@ export class AuthService {
     this.logger.log(
       `Login: buscando usuario por email o username con el identificador ${dto.loginInput}`,
     );
-    // Permite usar el correo o el nombre de usuario; además, excluye cuentas eliminadas.
+    // Busca por correo o nombre de usuario incluyendo cuentas deshabilitadas
+    // para poder distinguirlas después de comprobar que la contraseña es válida.
     const user = await this.userModel
       .findOne({
         $or: [{ email: dto.loginInput }, { username: dto.loginInput }],
-        isDeleted: false,
       })
       // Solicita explícitamente la contraseña, porque el esquema puede ocultarla por defecto.
       .select('+password')
@@ -161,6 +167,14 @@ export class AuthService {
         `Login: contraseña incorrecta para el usuario ${dto.loginInput}`,
       );
       throw new UnauthorizedException('Credenciales inválidas.');
+    }
+
+    if (user.isDeleted) {
+      // El mensaje específico se muestra solo tras validar la contraseña, así
+      // no se revela el estado de cuentas con credenciales incorrectas.
+      throw new UnauthorizedException(
+        'La cuenta está deshabilitada. Contactá a un administrador para rehabilitarla.',
+      );
     }
 
     this.logger.log(
@@ -212,7 +226,10 @@ export class AuthService {
     try {
       // verifyAsync comprueba la firma con JWT_SECRET y el vencimiento `exp`;
       // también rechaza tokens alterados o firmados con otra clave.
-      payload = await this.jwtService.verifyAsync<{ sub?: unknown; exp?: unknown }>(accessToken);
+      payload = await this.jwtService.verifyAsync<{
+        sub?: unknown;
+        exp?: unknown;
+      }>(accessToken);
     } catch {
       throw new UnauthorizedException('El token es inválido o expiró.');
     }
@@ -220,10 +237,14 @@ export class AuthService {
     // `sub` identifica al usuario. Validar su formato antes de consultar Mongo
     // evita errores de casteo si el token contiene un identificador mal formado.
     if (typeof payload.sub !== 'string' || !isValidObjectId(payload.sub)) {
-      throw new UnauthorizedException('El token no identifica un usuario válido.');
+      throw new UnauthorizedException(
+        'El token no identifica un usuario válido.',
+      );
     }
     if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
-      throw new UnauthorizedException('El token no tiene una fecha de expiración válida.');
+      throw new UnauthorizedException(
+        'El token no tiene una fecha de expiración válida.',
+      );
     }
 
     // El token podría seguir vigente aunque la cuenta haya sido deshabilitada
@@ -232,7 +253,9 @@ export class AuthService {
       .findOne({ _id: payload.sub, isDeleted: false })
       .exec();
     if (!user) {
-      throw new UnauthorizedException('La cuenta no existe o está deshabilitada.');
+      throw new UnauthorizedException(
+        'La cuenta no existe o está deshabilitada.',
+      );
     }
 
     return { user, expiresAt: payload.exp * 1000 };

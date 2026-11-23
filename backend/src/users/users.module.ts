@@ -1,12 +1,14 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { UsersController } from './users.controller.js';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './users.schema.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 // Agrupa el controlador, el servicio y el modelo del módulo Users.
 @Module({
   imports: [
+    forwardRef(() => AuthModule),
     // Registra el modelo User y permite inyectarlo en UsersService.
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],

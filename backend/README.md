@@ -52,6 +52,22 @@ Set `JWT_SECRET` in the backend environment to a long, random secret before star
 
 `DELETE /posts/:id` requires a valid session cookie. The authenticated author or an active administrator can logically delete a post; the post and its comments are then hidden. The endpoint does not use a client-supplied user ID to determine permissions.
 
+## Administración y estadísticas (Sprint 4)
+
+Las rutas de administración requieren una cookie `access_token` válida cuyo usuario tenga el rol `administrador`. `GET /users` lista los perfiles sin contraseñas; `POST /users` crea un usuario con `nombre`, `apellido`, `email`, `username`, `password`, `repetirPassword`, `fechaNacimiento`, `descripcionBreve` y `perfil` (`usuario` o `administrador`). `DELETE /users/:id` deshabilita la cuenta y `POST /users/:id/habilitar` la rehabilita. Las cuentas deshabilitadas no pueden iniciar sesión; al presentar credenciales correctas reciben un mensaje que indica que contacten a un administrador.
+
+`POST /users` también acepta `multipart/form-data` con una foto opcional en el campo `image` (JPG, PNG o WEBP, máximo 5 MB); sigue admitiendo JSON sin foto.
+
+El registro público (`POST /auth/register`) siempre crea cuentas con rol `usuario`; la asignación del rol administrador se limita a la ruta administrativa.
+
+Las estadísticas también requieren rol administrador:
+
+- `GET /statistics/posts-per-user`: publicaciones activas por usuario.
+- `GET /statistics/comments`: total de comentarios asociados a publicaciones activas.
+- `GET /statistics/comments-per-post`: comentarios activos por publicación.
+
+Los tres endpoints aceptan `from` y `to` opcionales como fechas ISO-8601. Para valores `YYYY-MM-DD`, el rango incluye el día completo de ambos extremos; para timestamps se usan los límites exactos enviados.
+
 ## API de comentarios
 
 Los comentarios forman parte de Publicaciones y usan rutas anidadas para identificar la publicación en cada acción:
