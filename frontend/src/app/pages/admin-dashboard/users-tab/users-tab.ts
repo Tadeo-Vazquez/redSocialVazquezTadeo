@@ -10,8 +10,56 @@ import { UsersList } from '../users-list/users-list';
   imports: [UsersList, UserCreateForm],
   selector: 'app-users-tab',
   template: `
-    <app-users-list #list />
-    <app-user-create-form (created)="list.loadUsers()" />
+    <nav class="user-tabs" aria-label="Opciones de usuarios">
+      <button
+        type="button"
+        [class.active]="activeTab === 'list'"
+        [attr.aria-current]="activeTab === 'list' ? 'page' : null"
+        (click)="activeTab = 'list'"
+      >
+        Listado de usuarios
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab === 'create'"
+        [attr.aria-current]="activeTab === 'create' ? 'page' : null"
+        (click)="activeTab = 'create'"
+      >
+        Crear usuario
+      </button>
+    </nav>
+    <div [hidden]="activeTab !== 'list'">
+      <app-users-list #list />
+    </div>
+    <div [hidden]="activeTab !== 'create'">
+      <app-user-create-form (created)="list.loadUsers()" />
+    </div>
+  `,
+  styles: `
+    .user-tabs {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 26px;
+    }
+
+    .user-tabs button {
+      border: 1px solid #685292;
+      border-radius: 8px;
+      padding: 10px 16px;
+      background: transparent;
+      color: #d7c6ff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .user-tabs button.active {
+      background: #a78bfa;
+      color: #1a1033;
+    }
   `,
 })
-export class UsersTab {}
+export class UsersTab {
+  activeTab: 'list' | 'create' = 'list';
+}
