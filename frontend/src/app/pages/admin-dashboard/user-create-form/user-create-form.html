@@ -1,0 +1,126 @@
+<section class="panel" aria-labelledby="create-title">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">Nueva cuenta</p>
+      <h2 id="create-title">Crear usuario</h2>
+    </div>
+  </div>
+  <form [formGroup]="userForm" (ngSubmit)="createUser()" novalidate>
+    <div class="form-grid">
+      <label
+        >Nombre<input formControlName="nombre" maxlength="50" autocomplete="given-name" />
+        @if (userForm.controls.nombre.touched && userForm.controls.nombre.invalid) {
+          <span class="field-error">Ingresá un nombre válido, solo letras y espacios.</span>
+        }
+      </label>
+      <label
+        >Apellido<input
+          formControlName="apellido"
+          maxlength="50"
+          autocomplete="family-name"
+        />
+        @if (userForm.controls.apellido.touched && userForm.controls.apellido.invalid) {
+          <span class="field-error">Ingresá un apellido válido, solo letras y espacios.</span>
+        }
+      </label>
+      <label
+        >Correo electrónico<input type="email" formControlName="email" autocomplete="email" />
+        @if (userForm.controls.email.touched && userForm.controls.email.invalid) {
+          <span class="field-error">Ingresá un correo válido.</span>
+        }
+      </label>
+      <label
+        >Nombre de usuario<input
+          formControlName="username"
+          maxlength="30"
+          autocomplete="username"
+        />
+        @if (userForm.controls.username.touched && userForm.controls.username.invalid) {
+          <span class="field-error"
+            >Usá letras, números, puntos, guiones o guiones bajos.</span
+          >
+        }
+      </label>
+      <label
+        >Fecha de nacimiento<input
+          type="date"
+          formControlName="fechaNacimiento"
+          autocomplete="bday"
+        />
+        @if (
+          userForm.controls.fechaNacimiento.touched &&
+          userForm.controls.fechaNacimiento.invalid
+        ) {
+          <span class="field-error">Seleccioná una fecha.</span>
+        }
+      </label>
+      <label
+        >Foto de perfil
+        @for (version of [imageInputVersion]; track version) {
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onImageSelected($event)"
+          />
+        }
+        <small>JPG, PNG o WEBP, máximo 5 MB.</small>
+        @if (imageError) {
+          <span class="field-error">{{ imageError }}</span>
+        }
+      </label>
+      <label
+        >Contraseña<input
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+        />
+        @if (userForm.controls.password.touched && userForm.controls.password.invalid) {
+          <span class="field-error">Mínimo 8 caracteres, una mayúscula y un número.</span>
+        }
+      </label>
+      <label
+        >Repetir contraseña<input
+          type="password"
+          formControlName="repetirPassword"
+          autocomplete="new-password"
+        />
+        @if (
+          userForm.controls.repetirPassword.touched &&
+          userForm.controls.repetirPassword.invalid
+        ) {
+          <span class="field-error">Repetí la contraseña.</span>
+        }
+      </label>
+      <label class="full-width"
+        >Descripción breve<textarea
+          formControlName="descripcionBreve"
+          rows="3"
+          maxlength="280"
+        ></textarea>
+        @if (
+          userForm.controls.descripcionBreve.touched &&
+          userForm.controls.descripcionBreve.invalid
+        ) {
+          <span class="field-error">Ingresá una descripción.</span>
+        }
+      </label>
+      <fieldset class="full-width role-field">
+        <legend>Rol de la cuenta</legend>
+        <label><input type="radio" formControlName="perfil" value="usuario" /> Usuario</label>
+        <label
+          ><input type="radio" formControlName="perfil" value="administrador" />
+          Administrador</label
+        >
+      </fieldset>
+    </div>
+    @if (formError) {
+      <p class="alert error" role="alert">{{ formError }}</p>
+    }
+    @if (formSuccess) {
+      <p class="alert success" role="status">{{ formSuccess }}</p>
+    }
+    <button class="primary-button" type="submit" [disabled]="submitting">
+      {{ submitting ? 'Creando cuenta...' : 'Crear usuario' }}
+    </button>
+  </form>
+</section>

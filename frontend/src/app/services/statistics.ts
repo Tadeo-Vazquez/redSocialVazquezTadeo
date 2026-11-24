@@ -20,6 +20,17 @@ export interface CommentsPerPost {
   cantidad: number;
 }
 
+// La fecha identifica un día UTC; los días sin comentarios no ocupan una fila.
+export interface CommentsPerDay {
+  fecha: string;
+  cantidad: number;
+}
+
+export interface CommentsStatistics {
+  total: number;
+  porDia: CommentsPerDay[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class Statistics {
   private readonly http = inject(HttpClient);
@@ -41,7 +52,7 @@ export class Statistics {
     // así el panel no mezcla gráficos de rangos distintos.
     return forkJoin({
       posts: this.http.get<PostsPerUser[]>(`${this.url}/posts-per-user`, { params }),
-      comments: this.http.get<{ total: number }>(`${this.url}/comments`, { params }),
+      comments: this.http.get<CommentsStatistics>(`${this.url}/comments`, { params }),
       perPost: this.http.get<CommentsPerPost[]>(`${this.url}/comments-per-post`, { params }),
     });
   }

@@ -1,0 +1,21 @@
+<article class="chart-card">
+  <h3>Publicaciones por usuario</h3>
+  <p class="hint">Cantidad de publicaciones creadas en el rango.</p>
+  @if (posts.length === 0) {
+    <p class="empty">No hay publicaciones en este período.</p>
+  } @else {
+    <ul class="bar-chart" aria-label="Gráfico de barras de publicaciones por usuario">
+      @for (item of posts; track item.usuarioId) {
+        <li>
+          <div class="bar-label">
+            <span>{{ item.username ? '@' + item.username : item.nombre || 'Usuario' }}</span
+            ><strong>{{ item.cantidad }}</strong>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="(item.cantidad / maxPosts) * 100"></div>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</article>

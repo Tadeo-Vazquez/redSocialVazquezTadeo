@@ -1,0 +1,78 @@
+<section class="panel" aria-labelledby="statistics-title">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">Actividad de la comunidad</p>
+      <h2 id="statistics-title">Estadísticas</h2>
+    </div>
+  </div>
+  <p class="hint">
+    Elegí un rango para los tres gráficos. Sin fechas se muestra toda la actividad visible.
+  </p>
+  <form class="range-form" [formGroup]="rangeForm" (ngSubmit)="loadStatistics()">
+    <label>
+      Desde
+      <input
+        #fromDate
+        type="date"
+        min="0001-01-01"
+        [attr.max]="today"
+        formControlName="from"
+        (input)="onRangeDateInput('from', fromDate)"
+        (change)="onRangeDateInput('from', fromDate)"
+        (blur)="onRangeDateInput('from', fromDate)"
+        [attr.aria-invalid]="rangeForm.controls.from.touched && (rangeForm.controls.from.invalid || invalidDateInputs.from) ? 'true' : null"
+        [attr.aria-describedby]="rangeForm.controls.from.touched && (rangeForm.controls.from.invalid || invalidDateInputs.from) ? 'from-date-error' : null"
+      />
+      @if (rangeForm.controls.from.touched && (rangeForm.controls.from.invalid || invalidDateInputs.from)) {
+        <span class="field-error" id="from-date-error">
+          @if (rangeForm.controls.from.hasError('futureDate')) {
+            La fecha de inicio no puede ser posterior a hoy.
+          } @else {
+            Ingresá una fecha de inicio válida.
+          }
+        </span>
+      }
+    </label>
+    <label>
+      Hasta
+      <input
+        #toDate
+        type="date"
+        min="0001-01-01"
+        max="9999-12-31"
+        formControlName="to"
+        (input)="onRangeDateInput('to', toDate)"
+        (change)="onRangeDateInput('to', toDate)"
+        (blur)="onRangeDateInput('to', toDate)"
+        [attr.aria-invalid]="rangeForm.controls.to.touched && (rangeForm.controls.to.invalid || invalidDateInputs.to) ? 'true' : null"
+        [attr.aria-describedby]="rangeForm.controls.to.touched && (rangeForm.controls.to.invalid || invalidDateInputs.to) ? 'to-date-error' : null"
+      />
+      @if (rangeForm.controls.to.touched && (rangeForm.controls.to.invalid || invalidDateInputs.to)) {
+        <span class="field-error" id="to-date-error">Ingresá una fecha de fin válida.</span>
+      }
+    </label>
+    <button class="primary-button" type="submit" [disabled]="loadingStatistics">
+      Aplicar rango
+    </button>
+  </form>
+  <p class="hint">
+    Las fechas incluyen el día completo en UTC. Se excluyen publicaciones dadas de baja y sus
+    comentarios.
+  </p>
+  @if (statisticsError) {
+    <p class="alert error" role="alert">{{ statisticsError }}</p>
+  }
+  @if (loadingStatistics) {
+    <p class="empty" role="status">Cargando estadísticas...</p>
+  } @else if (hasStatistics) {
+    <div class="charts">
+      <app-posts-per-user-chart [posts]="posts" />
+      <app-comments-timeline-chart
+        [total]="commentsTotal"
+        [days]="commentsDays"
+        [series]="commentsTimeline"
+      />
+      <app-comments-per-post-chart class="wide" [items]="commentsPerPost" [total]="commentsTotal" />
+    </div>
+  }
+</section>

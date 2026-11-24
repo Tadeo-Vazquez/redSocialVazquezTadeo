@@ -1,0 +1,66 @@
+<section class="panel" aria-labelledby="users-title">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">Comunidad</p>
+      <h2 id="users-title">Usuarios</h2>
+    </div>
+    <span class="count">{{ users.length }} cuentas</span>
+  </div>
+  @if (userError) {
+    <p class="alert error" role="alert">{{ userError }}</p>
+  }
+  @if (userMessage) {
+    <p class="alert success" role="status">{{ userMessage }}</p>
+  }
+  @if (loadingUsers) {
+    <p class="empty" role="status">Cargando usuarios...</p>
+  } @else if (userError && users.length === 0) {
+    <button type="button" class="secondary-button" (click)="loadUsers()">Reintentar</button>
+  } @else if (users.length === 0) {
+    <p class="empty">Todavía no hay usuarios.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users; track user._id) {
+            <tr>
+              <td>
+                <strong>{{ user.nombre }} {{ user.apellido }}</strong
+                ><span class="username">{{ '@' + user.username }}</span>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.perfil === 'administrador' ? 'Administrador' : 'Usuario' }}</td>
+              <td>
+                <span class="status" [class.disabled]="user.isDeleted">{{
+                  user.isDeleted ? 'Deshabilitado' : 'Habilitado'
+                }}</span>
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="action-button"
+                  [disabled]="pendingUserIds.has(user._id)"
+                  (click)="toggleUser(user)"
+                >
+                  {{ user.isDeleted ? 'Habilitar' : 'Deshabilitar' }}
+                </button>
+                @if (user._id === currentUserId) {
+                  <span class="username">Tu cuenta</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

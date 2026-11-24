@@ -25,10 +25,9 @@
         <button class="retry-button" type="button" (click)="retryLoad()">Reintentar</button>
       </div>
     } @else if (post) {
-      <!-- La foto ocupa la columna izquierda y los datos y comentarios la columna derecha. -->
-      <div class="detail-layout">
-        <section class="detail-image-column" aria-label="Imagen de la publicación">
-          @if (post.imagenUrl) {
+      <div class="detail-layout" [class.without-image]="!post.imagenUrl">
+        @if (post.imagenUrl) {
+          <section class="detail-image-column" aria-label="Imagen de la publicación">
             <button
               class="detail-image-button"
               type="button"
@@ -37,13 +36,8 @@
             >
               <img class="detail-image" [src]="post.imagenUrl" [alt]="post.titulo" />
             </button>
-          } @else {
-            <div class="detail-image-placeholder" aria-label="Publicación sin imagen">
-              <img src="/imagen.png" alt="" aria-hidden="true" />
-              <span>Esta publicación no tiene imagen</span>
-            </div>
-          }
-        </section>
+          </section>
+        }
 
         <section class="detail-info-column" aria-label="Información y comentarios de la publicación">
           <header class="detail-author">

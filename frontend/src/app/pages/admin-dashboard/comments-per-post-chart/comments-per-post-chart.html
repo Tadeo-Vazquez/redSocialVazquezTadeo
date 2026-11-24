@@ -1,0 +1,30 @@
+<article class="chart-card">
+  <h3>Comentarios por publicación</h3>
+  <p class="hint">Distribución de comentarios creados en el rango.</p>
+  @if (items.length === 0) {
+    <p class="empty">No hay comentarios en este período.</p>
+  } @else {
+    <div class="donut-layout">
+      <div
+        class="donut"
+        [style.background]="chartBackground"
+        role="img"
+        aria-label="Gráfico de torta de comentarios por publicación"
+      >
+        <div>
+          <strong>{{ total }}</strong
+          ><span>total</span>
+        </div>
+      </div>
+      <ul class="legend">
+        @for (item of items; track item.publicacionId; let i = $index) {
+          <li>
+            <span class="legend-dot" [style.background]="chartColor(i)"></span
+            ><span>{{ item.titulo }}</span
+            ><strong>{{ item.cantidad }}</strong>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</article>

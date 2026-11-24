@@ -1,0 +1,46 @@
+<article class="chart-card total-card">
+  <h3>Comentarios realizados</h3>
+  <p class="hint">Total de comentarios creados en el rango.</p>
+  <div class="total-graphic">
+    <strong>{{ total }}</strong
+    ><span>comentarios</span>
+  </div>
+  @if (series; as timeline) {
+    <p class="timeline-heading">Comentarios por día (UTC)</p>
+    <div class="timeline-chart" role="img"
+      [attr.aria-label]="'Evolución diaria de comentarios desde ' + timeline.start + ' hasta ' + timeline.end + '. Máximo diario: ' + timeline.max + '. Consultá el detalle por día a continuación.'">
+      <div class="timeline-y-axis" aria-hidden="true">
+        <span>{{ timeline.max }}</span>
+        <span>0</span>
+      </div>
+      <svg viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="8" y1="8" x2="592" y2="8" class="timeline-grid" />
+        <line x1="8" y1="100" x2="592" y2="100" class="timeline-grid" />
+        <line x1="8" y1="192" x2="592" y2="192" class="timeline-grid" />
+        <polyline [attr.points]="timeline.line" class="timeline-line" />
+        @for (point of timeline.points; track point.fecha) {
+          <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4" class="timeline-point">
+            <title>{{ formatCommentsDate(point.fecha) }}: {{ point.cantidad }} comentarios</title>
+          </circle>
+        }
+      </svg>
+      <div class="timeline-x-axis" aria-hidden="true">
+        <span>{{ timeline.start }}</span>
+        @if (timeline.end !== timeline.start) {
+          <span>{{ timeline.end }}</span>
+        }
+      </div>
+    </div>
+    <details class="timeline-details">
+      <summary>Ver cantidad por día</summary>
+      <p>Los días no incluidos en la lista tienen 0 comentarios.</p>
+      <ul>
+        @for (day of days; track day.fecha) {
+          <li>{{ formatCommentsDate(day.fecha) }}: {{ day.cantidad }} comentarios</li>
+        }
+      </ul>
+    </details>
+  } @else {
+    <p class="empty">No hay comentarios en este período.</p>
+  }
+</article>

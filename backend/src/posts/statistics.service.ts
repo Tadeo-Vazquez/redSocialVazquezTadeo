@@ -69,21 +69,27 @@ export class StatisticsService {
   }
 
   /**
-   * Devuelve un único total de comentarios cuyo post sigue activo. El join y
-   * unwind descartan comentarios huérfanos o pertenecientes a publicaciones
-   * dadas de baja, manteniendo la misma visibilidad que usa el feed.
+   * Cuenta comentarios visibles por día UTC y suma esos mismos valores para
+   * obtener el total. El join descarta comentarios de publicaciones dadas de baja.
    */
   async totalComments(range: StatisticsRangeDto) {
     const pipeline: PipelineStage[] = [
       { $match: this.createdAtFilter(range) },
       this.activePostLookup(),
       { $unwind: '$publicacion' },
-      { $count: 'total' },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'UTC' } },
+          cantidad: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, fecha: '$_id', cantidad: 1 } },
     ];
-    const [result] = await this.commentModel.aggregate(pipeline).exec();
-    // MongoDB no produce fila en $count si no hay coincidencias; en ese caso
-    // la API mantiene una respuesta numérica estable con total igual a cero.
-    return { total: result?.total ?? 0 };
+    const porDia = await this.commentModel
+      .aggregate<{ fecha: string; cantidad: number }>(pipeline)
+      .exec();
+    return { total: porDia.reduce((sum, day) => sum + day.cantidad, 0), porDia };
   }
 
   /**
