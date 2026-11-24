@@ -209,6 +209,7 @@ button:disabled {
 .range-form .primary-button {
   margin: calc(1.25rem + 8px) 0 0;
 }
+// Distribución compartida de las tarjetas: dos columnas, o una en pantallas pequeñas.
 .charts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -246,6 +247,7 @@ button:disabled {
 .bar-label span {
   overflow-wrap: anywhere;
 }
+// El track define el largo completo; el ancho del fill lo calcula la plantilla.
 .bar-track {
   height: 9px;
   margin-top: 8px;
@@ -275,6 +277,7 @@ button:disabled {
   font-size: 0.85rem;
   font-weight: 600;
 }
+// Los ejes son HTML y la línea se dibuja en el SVG ubicado a su derecha.
 .timeline-chart {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -337,6 +340,7 @@ button:disabled {
   gap: 36px;
   margin-top: 24px;
 }
+// La plantilla aporta el gradiente de segmentos; el círculo interior forma el hueco.
 .donut {
   flex: 0 0 180px;
   width: 180px;

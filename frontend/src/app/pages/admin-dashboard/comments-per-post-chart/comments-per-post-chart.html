@@ -5,6 +5,9 @@
     <p class="empty">No hay comentarios en este período.</p>
   } @else {
     <div class="donut-layout">
+      <!-- El fondo es un conic-gradient calculado en el componente: cada
+           segmento representa la proporción de comentarios de una publicación.
+           El div interior tapa el centro y deja visible el anillo. -->
       <div
         class="donut"
         [style.background]="chartBackground"
@@ -16,6 +19,8 @@
           ><span>total</span>
         </div>
       </div>
+      <!-- Se usa el mismo índice para el color del segmento y el de su leyenda.
+           El título y la cantidad también están disponibles como texto. -->
       <ul class="legend">
         @for (item of items; track item.publicacionId; let i = $index) {
           <li>

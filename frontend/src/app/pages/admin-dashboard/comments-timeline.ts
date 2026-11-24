@@ -64,7 +64,11 @@ export function buildCommentsTimeline(
     if (lastTime + dayMs < endTime) expanded.push({ fecha: end, cantidad: 0 });
   }
 
-  // El eje X usa tiempo transcurrido, no posiciones uniformes por fila.
+  // viewBox es 600 x 200 y deja 8 unidades de margen: X va de 8 a 592
+  // según el tiempo transcurrido, no según la posición de cada fila.
+  // Si el rango tiene un solo día, el punto se centra en x=300.
+  // En SVG Y crece hacia abajo: 0 comentarios queda en y=192 y el máximo
+  // en y=8; los valores intermedios se escalan proporcionalmente.
   const points = expanded.map((day) => ({
     ...day,
     x: startTime === endTime ? 300 : 8 + ((timestamp(day.fecha) - startTime) / (endTime - startTime)) * 584,
@@ -72,6 +76,7 @@ export function buildCommentsTimeline(
   }));
   return {
     points,
+    // polyline recibe pares "x,y" separados por espacios y los une en orden.
     line: points.map((point) => `${point.x},${point.y}`).join(' '),
     start: formatTimelineDate(start),
     end: formatTimelineDate(end),

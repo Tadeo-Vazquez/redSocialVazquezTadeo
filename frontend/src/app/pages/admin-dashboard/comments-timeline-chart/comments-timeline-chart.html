@@ -7,16 +7,23 @@
   </div>
   @if (series; as timeline) {
     <p class="timeline-heading">Comentarios por día (UTC)</p>
+    <!-- El SVG es decorativo para lectores de pantalla: el contenedor describe
+         el rango y el máximo, y el detalle inferior ofrece los valores por día. -->
     <div class="timeline-chart" role="img"
       [attr.aria-label]="'Evolución diaria de comentarios desde ' + timeline.start + ' hasta ' + timeline.end + '. Máximo diario: ' + timeline.max + '. Consultá el detalle por día a continuación.'">
       <div class="timeline-y-axis" aria-hidden="true">
         <span>{{ timeline.max }}</span>
         <span>0</span>
       </div>
+      <!-- viewBox define coordenadas internas de 600 x 200; preserveAspectRatio
+           permite adaptar el dibujo al ancho y alto disponibles. Las líneas
+           horizontales son la cuadrícula, no datos de comentarios. -->
       <svg viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
         <line x1="8" y1="8" x2="592" y2="8" class="timeline-grid" />
         <line x1="8" y1="100" x2="592" y2="100" class="timeline-grid" />
         <line x1="8" y1="192" x2="592" y2="192" class="timeline-grid" />
+        <!-- points contiene pares x,y unidos por segmentos. Cada circle usa
+             cx/cy como centro y r como radio; title muestra fecha y cantidad. -->
         <polyline [attr.points]="timeline.line" class="timeline-line" />
         @for (point of timeline.points; track point.fecha) {
           <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4" class="timeline-point">

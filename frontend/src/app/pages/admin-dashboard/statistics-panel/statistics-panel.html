@@ -65,6 +65,8 @@
   @if (loadingStatistics) {
     <p class="empty" role="status">Cargando estadísticas...</p>
   } @else if (hasStatistics) {
+    <!-- El panel entrega los resultados del mismo rango a cada gráfico mediante
+         sus inputs. La línea ya viene calculada con las fechas del rango. -->
     <div class="charts">
       <app-posts-per-user-chart [posts]="posts" />
       <app-comments-timeline-chart

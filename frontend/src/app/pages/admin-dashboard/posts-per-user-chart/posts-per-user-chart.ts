@@ -8,6 +8,7 @@ import { PostsPerUser } from '../../../services/statistics';
   styleUrl: '../dashboard-shared.scss',
 })
 export class PostsPerUserChart {
+  // Cada entrada aporta usuarioId, nombre/username y cantidad de publicaciones.
   @Input({ required: true }) posts: PostsPerUser[] = [];
 
   /**

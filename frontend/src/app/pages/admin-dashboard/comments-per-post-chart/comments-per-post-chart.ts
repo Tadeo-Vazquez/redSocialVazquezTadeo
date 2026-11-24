@@ -8,13 +8,15 @@ import { CommentsPerPost } from '../../../services/statistics';
   styleUrl: '../dashboard-shared.scss',
 })
 export class CommentsPerPostChart {
+  // items identifica cada publicación y su cantidad; total se muestra en el centro.
   @Input({ required: true }) items: CommentsPerPost[] = [];
   @Input({ required: true }) total = 0;
 
   /**
    * Construye un gradiente circular para representar la proporción de
-   * comentarios por publicación. Cada segmento ocupa su porcentaje del total;
-   * la leyenda muestra los títulos y valores también como texto.
+   * comentarios por publicación. Los porcentajes se calculan sobre la suma de
+   * items; total es el valor recibido aparte para mostrar en el centro.
+   * Sin comentarios se usa un fondo uniforme.
    */
   get chartBackground(): string {
     const total = this.items.reduce((sum, item) => sum + item.cantidad, 0);

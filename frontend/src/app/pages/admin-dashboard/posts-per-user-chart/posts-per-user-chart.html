@@ -4,6 +4,8 @@
   @if (posts.length === 0) {
     <p class="empty">No hay publicaciones en este período.</p>
   } @else {
+    <!-- No se usa una librería de gráficos: cada fila de la lista representa
+         un usuario. track usa su ID para que Angular identifique cada fila. -->
     <ul class="bar-chart" aria-label="Gráfico de barras de publicaciones por usuario">
       @for (item of posts; track item.usuarioId) {
         <li>
@@ -11,6 +13,9 @@
             <span>{{ item.username ? '@' + item.username : item.nombre || 'Usuario' }}</span
             ><strong>{{ item.cantidad }}</strong>
           </div>
+          <!-- El track es el ancho disponible y el fill es la barra coloreada.
+               style.width.% asigna un porcentaje relativo al mayor valor:
+               el máximo ocupa el 100 % y los demás son proporcionales. -->
           <div class="bar-track">
             <div class="bar-fill" [style.width.%]="(item.cantidad / maxPosts) * 100"></div>
           </div>
